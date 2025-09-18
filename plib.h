@@ -23,38 +23,34 @@ typedef enum {
   VERBOSE,
 } mode;
 
+typedef enum {
+	PL_ARG_NOT_FOUND,
+	PL_ARG_REQUIRES_VALUE,
+	PL_ARG_NO_REQUIRES_VALUE,
+	PL_NO_ARGUMENTS_GIVEN,
+	PL_MEM_ALLOC_ERROR,
+	PL_SUCCESS,
+	PL_ARG_INVALID_FORMAT,
+	PL_ARG_IS_NULL
+} pl_return_type;
+
+static const char *pl_return_type_string[8] = {
+    [PL_ARG_NOT_FOUND] = "PL_ARG_NOT_FOUND",
+    [PL_ARG_REQUIRES_VALUE] = "PL_ARG_REQUIRES_VALUE",
+    [PL_ARG_NO_REQUIRES_VALUE] = "PL_ARG_NO_REQUIRES_VALUE",
+		[PL_NO_ARGUMENTS_GIVEN] = "PL_NO_ARGUMENTS_GIVEN",
+		[PL_MEM_ALLOC_ERROR] = "PL_MEM_ALLOC_ERROR",
+		[PL_SUCCESS] = "PL_SUCCESS",
+		[PL_ARG_INVALID_FORMAT] = "PL_ARG_INVALID_FORMAT",
+		[PL_ARG_IS_NULL] = "PL_ARG_IS_NULL"
+};
+
 
 typedef enum {
 	NO_VALUE = 1,
   TAKES_VALUE = 2,
 } set_argument_enum_values;
 
-/** 
- * @breif process system arguments AND set program settings 
- * @return int 
- * @param argc: amount of items in argv 
- * @param argv: array of arguments 
- * @details pl_proc_s_i is a wrapper for pl_proc_i, this function takes 
- * 					in an array of strings, the amount of those strings and a
- * 					struct that is set as the program settings, the program 
- * 					settings are used in places like pl_help and other outputs.
- **/
-int pl_proc_s_i(const int argc, const char *argv[], const pl_prog opt);
-
-/** 
- * @breif verbose print function 
- * @return int 
- * @param mode mode of print see mode enum 
- * @param LINE line number function called from 
- * @param FILE file function called from 
- * @param format print message
- * @param ... other values 
- * @details this is a wrapper for printf that also allows the user to 
- * 					pre-load styles depending on the type of output. The two 
- * 					outputs available are ERROR and VERBOSE, LINE and FILE can 
- * 					be optained using __LINE__ and __FILE__. see pl_v()
- **/
-int pl_v_i(mode mode, const int LINE, const char *FILE, const char *format, ...);
 
 /** 
  * @breif return bool if arg exist or not 
@@ -142,14 +138,14 @@ pl_arg *pl_a(pl_arg in);
  **/
 pl_arg *pl_arg_by_name(const char *name);
 
-extern pl_arg *argument_list;
-extern int argument_list_index;
-extern int argument_list_capacity;
+extern pl_arg *PL_ARGS;
+extern int PL_ARGS_IDX;
+extern int PL_ARGS_CAP;
+extern int PL_LAST_PROC_ARG;
+extern int PL_VERBOSE;
 
-
-#define USE_FNAME 0
-#define pl_v(a, c, ...) pl_v_i(a, __LINE__, __FILE__, c, ##__VA_ARGS__)
+#define pl_proc_at_i(i,argv) pl_proc_i(i,argv)
 #define pl_proc() pl_proc_i(argc,argv)
-#define pl_proc_s(opt) pl_proc_s_i(argc,argv,opt)
+#define PL_LAST_ARG PL_ARGS[PL_LAST_PROC_ARG-1].name
 
 #endif // PLIB3_H
