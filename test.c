@@ -1,29 +1,35 @@
 #include "plib.h"
-#include <stdbool.h>
 #include <stdio.h> 
 
-void help(){
-	printf("PLib example program\nOptions:\n");
-	pl_help();
-}
-
-
 int main(const int argc, const char *argv[]){
-	const pl_arg *test = pl_a((pl_arg){
+	// CREATE --test FLAG 
+	pl_arg *test = PL_A(
 			.name = "--test",
 			.description = "basic test flag",
-			.takes_value = true,
-			});
+			.takes_value = TAKES_VALUE, // | NO_VALUE
+			);
 
-	const pl_return_type ret = pl_proc_at_i(argc, argv);
+	// PARSE ARGUMENTS 
+	const pl_return_type ret = PL_PROC();
 
-	// on error
 	if(ret != PL_SUCCESS){
-		printf("error: %s\n",pl_return_type_string[ret]);
-		printf("from arg: %s\n",PL_LAST_ARG);
-		help();
+		printf("error: '%s' on argument '%s'\n",
+				pl_return_type_string[ret], // STRINGIFYED RETURN CODE
+				PL_LAST_ARG // LAST RUN COMMAND
+				);
+
+		printf("\nHere are the available flags:\n");
+		pl_help(); // LIST ALL CREATED ARGUMENTS
 	}
 
-	printf("\ndone\n");
+	if(pl_arg_run(test) == PL_SUCCESS){
+		printf("%s was run with '%s' value\n",
+				test.name,
+				pl_arg_value(test) // argument value
+				);
+	}
+
+	// EXIT PLib (required)
+	pl_exit();
 	return 1;
 }

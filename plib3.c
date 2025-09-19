@@ -4,18 +4,15 @@
 #include <string.h>
 #include "plib.h"
 
-/*  TODO:
- *  1. add verbose mode 
- */
-
 
 // external definintions
 pl_arg *PL_ARGS;
 int PL_ARGS_IDX      =  0;
 int PL_ARGS_CAP      =  0;
-int PL_LAST_PROC_ARG = -1;
-int PL_VERBOSE          =  0;
-
+int PL_PROC_END_ARGC = -1;
+int PL_VERBOSE       =  0;
+int PL_ARGC          = -1;
+char **PL_ARGV        = NULL;
 
 #define pl_v(mode,format,...) pl_v_i(mode,__func__,__LINE__,__FILE__,format, ##__VA_ARGS__)
 void pl_v_i(mode mode, const char *FUNC, const int LINE, const char *FILE, const char *format, ...) {
@@ -189,10 +186,13 @@ pl_arg *pl_arg_by_name(const char *name){
 	return &PL_ARGS[index];
 }
 
-int pl_proc_i(const int argc, const char *argv[]) {
-  if (argc <= 1) return PL_NO_ARGUMENTS_GIVEN;
+int pl_proc(const int argc, const char *argv[]) {
+  PL_ARGC = (int)argc;
+	PL_ARGV = (char **)argv;
+	
+	if (argc <= 1) return PL_NO_ARGUMENTS_GIVEN;
   for (int i = 1; i < argc; i++) {
-		PL_LAST_PROC_ARG = i;
+		PL_PROC_END_ARGC = i;
     if (!argv[i]) return PL_ARG_IS_NULL;
 
     // handle -- flag
@@ -290,18 +290,21 @@ int pl_proc_i(const int argc, const char *argv[]) {
 // get bool if pl_arg has been run or not,
 // useful for void pl_arg flags like --help
 int pl_arg_run(const pl_arg *local) {
-  if (validate_argument_list() != 0)
+  if (validate_argument_list() != PL_SUCCESS){
+    pl_v(ERROR, "argument_list validation failed");
     return -1;
+	}
+
   if (!local)
-    return 1;
+    return PL_ARG_IS_NULL;
 
   if (local->triggered)
-    return 0;
-  return 1;
+    return PL_SUCCESS;
+  return PL_FAILURE;
 }
 
 char *pl_arg_value(const pl_arg *local) {
-  if (validate_argument_list() != 0) {
+  if (validate_argument_list() != PL_SUCCESS) {
     pl_v(ERROR, "argument_list validation failed");
     return "";
   }
@@ -325,7 +328,7 @@ char *pl_arg_value(const pl_arg *local) {
 
 // EXPERIMENTAL
 int pl_all_triggered() {
-  if (validate_argument_list() != 0)
+  if (validate_argument_list() != PL_SUCCESS)
     return -1;
   for (int i = 0; i < PL_ARGS_IDX; i++) {
     const pl_arg *local = &PL_ARGS[i];

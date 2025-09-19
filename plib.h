@@ -31,10 +31,11 @@ typedef enum {
 	PL_MEM_ALLOC_ERROR,
 	PL_SUCCESS,
 	PL_ARG_INVALID_FORMAT,
-	PL_ARG_IS_NULL
+	PL_ARG_IS_NULL,
+	PL_FAILURE
 } pl_return_type;
 
-static const char *pl_return_type_string[8] = {
+static const char *pl_return_type_string[9] = {
     [PL_ARG_NOT_FOUND] = "PL_ARG_NOT_FOUND",
     [PL_ARG_REQUIRES_VALUE] = "PL_ARG_REQUIRES_VALUE",
     [PL_ARG_NO_REQUIRES_VALUE] = "PL_ARG_NO_REQUIRES_VALUE",
@@ -42,7 +43,8 @@ static const char *pl_return_type_string[8] = {
 		[PL_MEM_ALLOC_ERROR] = "PL_MEM_ALLOC_ERROR",
 		[PL_SUCCESS] = "PL_SUCCESS",
 		[PL_ARG_INVALID_FORMAT] = "PL_ARG_INVALID_FORMAT",
-		[PL_ARG_IS_NULL] = "PL_ARG_IS_NULL"
+		[PL_ARG_IS_NULL] = "PL_ARG_IS_NULL",
+		[PL_FAILURE] = "PL_FAILURE"
 };
 
 
@@ -71,7 +73,7 @@ int pl_arg_exist(const char *name);
  * @details processes all arguments set before call, does not set 
  * 					program config, see pl_proc_s_i().
  **/
-int pl_proc_i(const int argc, const char *argv[]);
+int pl_proc(const int argc, const char *argv[]);
 
 /** 
  * @breif return bool if argument has been run 
@@ -141,11 +143,16 @@ pl_arg *pl_arg_by_name(const char *name);
 extern pl_arg *PL_ARGS;
 extern int PL_ARGS_IDX;
 extern int PL_ARGS_CAP;
-extern int PL_LAST_PROC_ARG;
+extern int PL_PROC_END_ARGC;
 extern int PL_VERBOSE;
+extern char** PL_ARGV;
+extern int  PL_ARGC;
+
 
 #define pl_proc_at_i(i,argv) pl_proc_i(i,argv)
-#define pl_proc() pl_proc_i(argc,argv)
-#define PL_LAST_ARG PL_ARGS[PL_LAST_PROC_ARG-1].name
+#define PL_PROC() pl_proc(argc,argv)
+#define PL_A(...) pl_a((pl_arg){__VA_ARGS__})
+#define PL_LAST_ARG PL_ARGV[PL_PROC_END_ARGC]
+
 
 #endif // PLIB3_H
