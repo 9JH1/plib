@@ -152,7 +152,7 @@ extern int  PL_ARGC;
 #define pl_proc_at_i(i,argv) pl_proc_i(i,argv)
 #define PL_PROC() pl_proc(argc,argv)
 #define PL_A(...) pl_a((pl_arg){__VA_ARGS__})
-#define PL_LAST_ARG PL_ARGV[PL_PROC_END_ARGC]
+#define PL_LAST_ARG (PL_PROC_END_ARGC >= 0) ? (PL_ARGV[PL_PROC_END_ARGC]) : ""
 
 
 #endif // PLIB3_H

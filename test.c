@@ -24,7 +24,7 @@ int main(const int argc, const char *argv[]){
 
 	if(pl_arg_run(test) == PL_SUCCESS){
 		printf("%s was run with '%s' value\n",
-				test.name,
+				test->name,
 				pl_arg_value(test) // argument value
 				);
 	}
