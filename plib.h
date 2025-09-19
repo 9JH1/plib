@@ -152,7 +152,21 @@ extern int  PL_ARGC;
 #define pl_proc_at_i(i,argv) pl_proc_i(i,argv)
 #define PL_PROC() pl_proc(argc,argv)
 #define PL_A(...) pl_a((pl_arg){__VA_ARGS__})
-#define PL_LAST_ARG (PL_PROC_END_ARGC >= 0) ? (PL_ARGV[PL_PROC_END_ARGC]) : ""
+
+/* issue occured when PL_PROC_END_ARGC was below 
+ * 0, and pl_proc returned a PL_NO_ARGUMENTS_GIVEN 
+ * core. this case caused a segfault, this happened 
+ * because in plib3.c PL_PROC_END_ARGC is defined 
+ * as -1, when PL_NO_ARGUMENTS_GIVEN returns it means 
+ * that pl_proc has skipped looping through the arguments 
+ * all togeather which means that when PL_LAST_ARG is called 
+ * it trys to access the -1 index of PL_ARGV which 
+ * is what causes the seg fault, this has been fixed 
+ * by running an inline if statement to check if 
+ * PL_PROC_END_ARG is defined. 2025-09-19 18:11 */
+#define PL_LAST_ARG (PL_PROC_END_ARGC >= 0) ? \
+										(PL_ARGV[PL_PROC_END_ARGC]) : \
+										pl_return_type_string[PL_NO_ARGUMENTS_GIVEN]
 
 
 #endif // PLIB3_H
