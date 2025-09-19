@@ -1,7 +1,6 @@
 #ifndef PLIB3_H
 #define PLIB3_H
 
-
 typedef struct pl_arg {
   const char *name;
   const char *description;
