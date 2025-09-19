@@ -20,9 +20,8 @@ int main(const int argc, const char *argv[]){
 
 		printf("\nHere are the available flags:\n");
 		pl_help(); // LIST ALL CREATED ARGUMENTS
-	}
-
-	if(pl_arg_run(test) == PL_SUCCESS){
+	
+	} else if(pl_arg_run(test) == PL_SUCCESS){
 		printf("%s was run with '%s' value\n",
 				test->name,
 				pl_arg_value(test) // argument value
@@ -33,3 +32,6 @@ int main(const int argc, const char *argv[]){
 	pl_exit();
 	return 1;
 }
+
+// PLib showcase code 
+// 2025-09-19 18:14
