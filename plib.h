@@ -2,16 +2,15 @@
 #define PLIB3_H
 
 typedef struct pl_arg {
-	// must be in this order for PL_A (at bot)
-  const char *name;
+  // basic options
+	const char *name;
   const char *description;
-  int takes_value;
-  
-	const char *catagory;
+	int takes_value;
 
-	// NEW:
+	// extra options
+	const char *catagory; 
 	const char *shorthand;
-	const char *type;
+	const char *type;	
 
 	// metadata: 
   char *value;
@@ -52,7 +51,7 @@ static const char *pl_return_type_string[9] = {
 typedef enum {
 	NO_VALUE = 1,
   TAKES_VALUE = 2,
-} set_argument_enum_values;
+} pl_a_enum_values;
 
 
 /** 

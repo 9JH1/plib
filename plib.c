@@ -13,7 +13,7 @@ int PL_ARGS_CAP      =  0;
 int PL_PROC_END_ARGC = -1;
 int PL_VERBOSE       =  0;
 int PL_ARGC          = -1;
-char **PL_ARGV        = NULL;
+char **PL_ARGV       = NULL;
 
 #define pl_v(mode,format,...) pl_v_i(mode,__func__,__LINE__,__FILE__,format, ##__VA_ARGS__)
 void pl_v_i(mode mode, const char *FUNC, const int LINE, const char *FILE, const char *format, ...) {
@@ -111,7 +111,7 @@ pl_arg *pl_a(pl_arg in) {
 	local->triggered = 0;
   local->value = NULL;
 
-	if(local->catagory == NULL) local->catagory = "base";
+	if(local->catagory == NULL) local->catagory = "Options";
 	if(local->takes_value < 1) local->takes_value = NO_VALUE;
 
 	PL_ARGS_IDX++;
@@ -120,7 +120,7 @@ pl_arg *pl_a(pl_arg in) {
 }
 
 int list_contains(const char*item, char **list, const int list_size){
-	if(list_size >= 0) return 1;
+	if(list_size <= 0) return 1;
 	for(int i=0;i<list_size;i++)
 		if(strcmp(list[i],item)==0)
 			return 0; // true 
@@ -132,36 +132,62 @@ int list_contains(const char*item, char **list, const int list_size){
 void pl_help(void) {
 	if (PL_ARGS == NULL) return;	
 	
-	int catagorys_capacity = 10;
-	char **catagorys = malloc(sizeof(char)*catagorys_capacity);
+	int catagorys_capacity = 2;
+	char **catagorys = malloc(catagorys_capacity*sizeof(char *));
 	int catagorys_index = 0;
 
 	// for each argument: 
 	for(int i=0;i<PL_ARGS_IDX;i++){
 		if(list_contains(PL_ARGS[i].catagory,catagorys,catagorys_index)==1){
 			if(catagorys_index == catagorys_capacity){
-				catagorys_capacity+=2;
-				char **temp = realloc(catagorys,sizeof(char)*catagorys_capacity);
+				catagorys_capacity *= 2;
+				char **temp = realloc(catagorys,catagorys_capacity * sizeof(char *));
 				if(!temp){
 					pl_v(ERROR,"Couldent re-allocate catagorys list.");
 					return;
 				}
 				catagorys = temp;
 			}
-
+			
 			catagorys[catagorys_index] = (char *)PL_ARGS[i].catagory;
 			catagorys_index++;
 		}
 	}
+	int longest_name = 0;
 
+	// get longest items
+	for(int i = 0; i < PL_ARGS_IDX; i++){
+		const pl_arg loc = PL_ARGS[i];
+		const int loc_s = strlen(loc.name);
+		if(loc_s > longest_name) longest_name = loc_s;
+	}
 
-  for (int i = 0; i < PL_ARGS_IDX; i++) {
-    printf("%s", PL_ARGS[i].name);
-		if(PL_ARGS[i].description != NULL)
-			printf(" | %s",PL_ARGS[i].description);
+	// super ineffiecient loop
+	for(int i = 0; i < catagorys_index; i++){
+		const char* cat = catagorys[i]; // :3
 		
-		printf("\n"); 
-  }
+		// print catagory name
+		printf("\033[1m%s:\033[0m\n",cat);
+		for(int ii = 0; ii < PL_ARGS_IDX; ii++){
+			const pl_arg loc = PL_ARGS[ii];
+			const int loc_s = strlen(loc.name);
+			
+			/* i know this should have been defined inside 
+			 * of the pl_a function regardless of if the dev
+			 * set but this is here it but just to make sure.. 
+			 */
+			if(loc.catagory != NULL){
+				if(strcmp(loc.catagory,cat)==0){
+					// print arguments 
+					printf(" %s",loc.name);
+					for(int iii = 0; iii < longest_name - loc_s;iii++) printf(" ");
+					printf(" | \033[3m%s\033[0m\n",loc.description);
+				}
+			}
+		}
+		// extra newline for visuals
+		printf("\n");
+	}
 
 	free(catagorys);
 }
