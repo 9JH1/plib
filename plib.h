@@ -2,9 +2,12 @@
 #define PLIB3_H
 
 typedef struct pl_arg {
+	// must be in this order for PL_A (at bot)
   const char *name;
   const char *description;
-  const char *catagory;
+  int takes_value;
+  
+	const char *catagory;
 
 	// NEW:
 	const char *shorthand;
@@ -12,7 +15,6 @@ typedef struct pl_arg {
 
 	// metadata: 
   char *value;
-  int takes_value;
   int triggered;
 } pl_arg;
 
@@ -152,6 +154,9 @@ extern int  PL_ARGC;
 #define pl_proc_at_i(i,argv) pl_proc_i(i,argv)
 #define PL_PROC() pl_proc(argc,argv)
 #define PL_A(...) pl_a((pl_arg){__VA_ARGS__})
+
+// NEW:
+#define pl_arg_get(name) &PL_ARGS[pl_arg_exist(name)]
 
 /* issue occured when PL_PROC_END_ARGC was below 
  * 0, and pl_proc returned a PL_NO_ARGUMENTS_GIVEN 
