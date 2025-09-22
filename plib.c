@@ -184,8 +184,9 @@ int pl_arg_exist(const char *name) {
   for (int i = 0; i < PL_ARGS_IDX; i++){
     if (strcmp(PL_ARGS[i].name, name) == 0)
       return i; // pl_arg name found
-		if (strcmp(PL_ARGS[i].shorthand,name) == 0)
-			return i; // pl_arg shorthand found 
+		if(PL_ARGS[i].shorthand != NULL) 
+			if (strcmp(PL_ARGS[i].shorthand,name) == 0)
+				return i; // pl_arg shorthand found 
 	}
 
   return -1; // pl_arg was not found in argument_list
