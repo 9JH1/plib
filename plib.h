@@ -5,17 +5,16 @@ typedef struct pl_arg {
   const char *name;
   const char *description;
   const char *catagory;
+
+	// NEW:
+	const char *shorthand;
+	const char *type;
+
+	// metadata: 
   char *value;
   int takes_value;
   int triggered;
 } pl_arg;
-
-typedef struct pl_prog {
-	const char *name;
-	const char *version;
-	const char *description;
-} pl_prog;
-
 
 typedef enum {
   ERROR,
@@ -35,16 +34,17 @@ typedef enum {
 } pl_return_type;
 
 static const char *pl_return_type_string[9] = {
-    [PL_ARG_NOT_FOUND] = "PL_ARG_NOT_FOUND",
-    [PL_ARG_REQUIRES_VALUE] = "PL_ARG_REQUIRES_VALUE",
-    [PL_ARG_NO_REQUIRES_VALUE] = "PL_ARG_NO_REQUIRES_VALUE",
-		[PL_NO_ARGUMENTS_GIVEN] = "PL_NO_ARGUMENTS_GIVEN",
-		[PL_MEM_ALLOC_ERROR] = "PL_MEM_ALLOC_ERROR",
-		[PL_SUCCESS] = "PL_SUCCESS",
-		[PL_ARG_INVALID_FORMAT] = "PL_ARG_INVALID_FORMAT",
-		[PL_ARG_IS_NULL] = "PL_ARG_IS_NULL",
-		[PL_FAILURE] = "PL_FAILURE"
+    [PL_ARG_NOT_FOUND] = "ARG_NOT_FOUND",
+    [PL_ARG_REQUIRES_VALUE] = "ARG_REQUIRES_VALUE",
+    [PL_ARG_NO_REQUIRES_VALUE] = "ARG_NO_REQUIRES_VALUE",
+		[PL_NO_ARGUMENTS_GIVEN] = "NO_ARGUMENTS_GIVEN",
+		[PL_MEM_ALLOC_ERROR] = "MEM_ALLOC_ERROR",
+		[PL_SUCCESS] = "SUCCESS",
+		[PL_ARG_INVALID_FORMAT] = "ARG_INVALID_FORMAT",
+		[PL_ARG_IS_NULL] = "ARG_IS_NULL",
+		[PL_FAILURE] = "FAILURE"
 };
+
 
 
 typedef enum {

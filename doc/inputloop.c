@@ -21,13 +21,11 @@ int drag_y = 0;
 int main(){
 	signal(SIGINT,quit);
 
-	clear();
 	while(1){
 		// capture event
 		InputEvent loc; 
-		gotoxy(1,1);
 		int ret = input(&loc);
-		//clear();
+		clear();
 		
 		// handle button hover
 		if(

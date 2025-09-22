@@ -1,4 +1,4 @@
-// PLib 4.2.2 2025-09-19 23:40
+// Plib 2025-09-22 14:17
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -90,7 +90,7 @@ int validate_argument_list() {
 pl_arg *pl_a(pl_arg in) {
   if (validate_argument_list() != PL_SUCCESS){
 		// no need for argument because issue occured
-		pl_v(VERBOSE,"validate_argument_list returned with an error");
+		pl_v(ERROR,"validate_argument_list returned with an error");
 		return (pl_arg *){0};
 	}
 
@@ -99,10 +99,15 @@ pl_arg *pl_a(pl_arg in) {
 		return (pl_arg *){0};
 	}
 
+	// preference, remove if wanted
+	if(in.shorthand != NULL && in.takes_value == TAKES_VALUE){
+		pl_v(VERBOSE,"argument should not be shorthand and take value");
+	}
+
 	pl_arg *local =  &PL_ARGS[PL_ARGS_IDX]; 
 	*local = in;
 
-	// safegaurd vars 
+	// reset vars 
 	local->triggered = 0;
   local->value = NULL;
 
@@ -125,6 +130,8 @@ int list_contains(const char*item, char **list, const int list_size){
 }
 
 void pl_help(void) {
+	if (PL_ARGS == NULL) return;	
+	
 	int catagorys_capacity = 10;
 	char **catagorys = malloc(sizeof(char)*catagorys_capacity);
 	int catagorys_index = 0;
@@ -147,7 +154,6 @@ void pl_help(void) {
 		}
 	}
 
-  if (PL_ARGS == NULL) return;	
 
   for (int i = 0; i < PL_ARGS_IDX; i++) {
     printf("%s", PL_ARGS[i].name);
@@ -173,10 +179,14 @@ void pl_exit(void) {
   }
 }
 
+// NEW: added shorthand checker
 int pl_arg_exist(const char *name) {
-  for (int i = 0; i < PL_ARGS_IDX; i++)
+  for (int i = 0; i < PL_ARGS_IDX; i++){
     if (strcmp(PL_ARGS[i].name, name) == 0)
-      return i; // pl_arg name found in argument_list
+      return i; // pl_arg name found
+		if (strcmp(PL_ARGS[i].shorthand,name) == 0)
+			return i; // pl_arg shorthand found 
+	}
 
   return -1; // pl_arg was not found in argument_list
 }
