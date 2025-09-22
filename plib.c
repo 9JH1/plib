@@ -99,6 +99,21 @@ pl_arg *pl_a(pl_arg in) {
 		return (pl_arg *){0};
 	}
 
+	// check argument dosent already exist 
+	for(int i = 0; i < PL_ARGS_IDX ;i++){
+		if(PL_ARGS[i].name != NULL)
+			if(strcmp(PL_ARGS[i].name,in.name)==0){
+				pl_v(ERROR,"argument name '%s' already exists\n"); 
+				return (pl_arg *){0};
+			}
+
+		if(PL_ARGS[i].shorthand != NULL && in.shorthand != NULL)
+			if(strcmp(PL_ARGS[i].shorthand,in.shorthand) == 0){
+				pl_v(ERROR,"argument shorthand '%s' already exists\n");
+				return (pl_arg *){0};
+			}
+	}
+
 	// preference, remove if wanted
 	if(in.shorthand != NULL && in.takes_value == TAKES_VALUE){
 		pl_v(VERBOSE,"argument should not be shorthand and take value");
