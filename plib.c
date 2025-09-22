@@ -1,4 +1,3 @@
-// Plib 2025-09-22 14:17
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>

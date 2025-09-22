@@ -1,5 +1,5 @@
-#ifndef PLIB3_H
-#define PLIB3_H
+#ifndef PLIB_H
+#define PLIB_H
 
 typedef struct pl_arg {
   // basic options
@@ -153,8 +153,9 @@ extern int  PL_ARGC;
 #define pl_proc_at_i(i,argv) pl_proc_i(i,argv)
 #define PL_PROC() pl_proc(argc,argv)
 #define PL_A(...) pl_a((pl_arg){__VA_ARGS__})
-
-// NEW:
+ 
+// NEW: 
+#define PL_VERSION "4.19" 
 #define pl_arg_get(name) &PL_ARGS[pl_arg_exist(name)]
 
 /* issue occured when PL_PROC_END_ARGC was below 
@@ -173,4 +174,4 @@ extern int  PL_ARGC;
 										pl_return_type_string[PL_NO_ARGUMENTS_GIVEN]
 
 
-#endif // PLIB3_H
+#endif // PLIB_H
