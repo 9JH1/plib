@@ -4,6 +4,10 @@
 #include <string.h>
 #include "plib.h"
 
+typedef enum {
+  ERROR,
+  VERBOSE,
+} mode;
 
 // external definintions
 pl_arg *PL_ARGS;
@@ -114,7 +118,7 @@ pl_arg *pl_a(pl_arg in) {
 	}
 
 	// preference, remove if wanted
-	if(in.shorthand != NULL && in.takes_value == TAKES_VALUE){
+	if(in.shorthand != NULL && in.takes_value == 1){
 		pl_v(VERBOSE,"argument should not be shorthand and take value");
 	}
 
@@ -126,7 +130,7 @@ pl_arg *pl_a(pl_arg in) {
   local->value = NULL;
 
 	if(local->catagory == NULL) local->catagory = "Options";
-	if(local->takes_value < 1) local->takes_value = NO_VALUE;
+	if(local->takes_value < 1) local->takes_value = 0;
 
 	PL_ARGS_IDX++;
 	pl_v(VERBOSE,"argument created: \"%s\"! \n",in.name);
@@ -312,7 +316,7 @@ int pl_proc(const int argc, const char *argv[]) {
           /* a key has been provided but it has
            * no value, this is good for if you have
            * void flags like --help. */
-          if (local_argument->takes_value == TAKES_VALUE)
+          if (local_argument->takes_value == 1)
           	return PL_ARG_REQUIRES_VALUE;
 
           local_argument->triggered = 1;
@@ -320,7 +324,7 @@ int pl_proc(const int argc, const char *argv[]) {
 
           /* a key has been provided and a value
            * has also been provided. */
-          if (local_argument->takes_value == NO_VALUE)
+          if (local_argument->takes_value == 0)
             return PL_ARG_NO_REQUIRES_VALUE;
 
           // set the value if needed
