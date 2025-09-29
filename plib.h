@@ -18,6 +18,7 @@ typedef struct pl_arg {
 	// metadata ( this is overwritten )
   char *value;
   int triggered;
+	int shorthand_triggered;
 } pl_arg;
 
 
@@ -78,10 +79,10 @@ extern pl_arg *PL_ARGS;
 extern int PL_ARGS_IDX;
 extern int PL_ARGS_CAP;
 extern int PL_PROC_END_ARGC;
-extern int PL_VERBOSE;
 extern char** PL_ARGV;
 extern int PL_ARGC;
 
+#define PL_VERBOSE 1
 #define PL_VERSION "4.21" 
 #define pl_proc_at_i(i,argv) pl_proc_i(i,argv)
 #define PL_PROC() pl_proc(argc,argv)
@@ -90,5 +91,5 @@ extern int PL_ARGC;
 #define PL_LAST_ARG (PL_PROC_END_ARGC >= 0) ? \
 										(PL_ARGV[PL_PROC_END_ARGC]) : \
 										pl_return_type_string[PL_NO_ARGUMENTS_GIVEN]
-
+#define PL_E(i) pl_return_type_string[i]
 #endif // PLIB_H

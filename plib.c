@@ -14,13 +14,12 @@ pl_arg *PL_ARGS;
 int PL_ARGS_IDX      =  0;
 int PL_ARGS_CAP      =  0;
 int PL_PROC_END_ARGC = -1;
-int PL_VERBOSE       =  0;
 int PL_ARGC          = -1;
 char **PL_ARGV       = NULL;
 
 #define pl_v(mode,format,...) pl_v_i(mode,__func__,__LINE__,__FILE__,format, ##__VA_ARGS__)
 void pl_v_i(mode mode, const char *FUNC, const int LINE, const char *FILE, const char *format, ...) {
-	if(mode == VERBOSE && PL_VERBOSE== 0) return;
+	if(mode == VERBOSE && !PL_VERBOSE) return;
   va_list args;
 
 	// header
@@ -127,6 +126,7 @@ pl_arg *pl_a(pl_arg in) {
 
 	// reset vars 
 	local->triggered = 0;
+	local->shorthand_triggered = 0;
   local->value = NULL;
 
 	if(local->catagory == NULL) local->catagory = "Options";
@@ -147,16 +147,27 @@ int list_contains(const char*item, char **list, const int list_size){
 	return 1;
 }
 
+void rep(const int l, const int c){
+	for(int i = 0; i < l; i++)
+		printf("%c",c);
+}
+
 void pl_help(void) {
 	if (PL_ARGS == NULL) return;	
 	
 	int catagorys_capacity = 2;
 	char **catagorys = malloc(catagorys_capacity*sizeof(char *));
 	int catagorys_index = 0;
+	int longest_name = 0;
+	int longest_shorthand = 0;
+	int longest_type = 0;
 
 	// for each argument: 
 	for(int i=0;i<PL_ARGS_IDX;i++){
-		if(list_contains(PL_ARGS[i].catagory,catagorys,catagorys_index)==1){
+		const pl_arg loc = PL_ARGS[i];
+
+		// check catagory 
+		if(list_contains(loc.catagory,catagorys,catagorys_index)==1){
 			if(catagorys_index == catagorys_capacity){
 				catagorys_capacity *= 2;
 				char **temp = realloc(catagorys,catagorys_capacity * sizeof(char *));
@@ -166,42 +177,65 @@ void pl_help(void) {
 				}
 				catagorys = temp;
 			}
-			
+
 			catagorys[catagorys_index] = (char *)PL_ARGS[i].catagory;
 			catagorys_index++;
 		}
-	}
-	int longest_name = 0;
 
-	// get longest items
-	for(int i = 0; i < PL_ARGS_IDX; i++){
-		const pl_arg loc = PL_ARGS[i];
-		const int loc_s = strlen(loc.name);
-		if(loc_s > longest_name) longest_name = loc_s;
-	}
-
-	// super ineffiecient loop
-	for(int i = 0; i < catagorys_index; i++){
-		const char* cat = catagorys[i]; // :3
+		// get longest values 
+		if(loc.name != NULL)
+			if(strlen(loc.name) > longest_name)
+				longest_name = strlen(loc.name);
 		
-		// print catagory name
+		if(loc.shorthand != NULL)
+			if(strlen(loc.shorthand) > longest_shorthand)
+				longest_shorthand = strlen(loc.shorthand);
+		
+		if(loc.type != NULL)
+			if(strlen(loc.type) > longest_type)
+				longest_type = strlen(loc.type);
+	}
+	
+	// for each catagory 
+	for(int i = 0; i < catagorys_index; i++){
+		const char* cat = catagorys[i]; // :3	
 		printf("\033[1m%s:\033[0m\n",cat);
+
+		// for each argument
 		for(int ii = 0; ii < PL_ARGS_IDX; ii++){
 			const pl_arg loc = PL_ARGS[ii];
-			const int loc_s = strlen(loc.name);
-			
-			/* i know this should have been defined inside 
-			 * of the pl_a function regardless of if the dev
-			 * set but this is here it but just to make sure.. 
-			 */
+
 			if(loc.catagory != NULL){
-				if(strcmp(loc.catagory,cat)==0){
-					// print arguments 
-					printf(" %s",loc.name);
-					for(int iii = 0; iii < longest_name - loc_s;iii++) printf(" ");
-					printf(" | \033[3m%s\033[0m\n",loc.description);
-				}
+				// skip argument if it dosent match catagory 
+				if(strcmp(loc.catagory,cat)!=0) continue;
 			}
+
+			// print name 
+			if(loc.name != NULL && longest_name != 0){
+				printf("%s",loc.name);
+				rep(strlen(loc.name) - longest_name,' ');
+			}
+			
+			// print shorthand
+			if(loc.shorthand != NULL && longest_shorthand != 0){
+				printf(", %s",loc.shorthand);
+				rep(longest_shorthand - strlen(loc.shorthand), ' ');
+			} else if (longest_shorthand != 0)
+				rep(longest_shorthand + 2,' ');
+
+			// print type 
+			if(loc.type != NULL && longest_type != 0){
+				printf(" | %s",loc.type);
+				rep(longest_type - strlen(loc.type),' ');
+			} else if (longest_type != 0){
+				printf(" | ");
+				rep(longest_type, ' ');
+			}
+			// print description 
+			if(loc.description) printf(" | %s",loc.description);
+
+
+			printf("\n");
 		}
 		// extra newline for visuals
 		printf("\n");
@@ -228,12 +262,13 @@ int pl_arg_exist(const char *name) {
   for (int i = 0; i < PL_ARGS_IDX; i++){
     if (strcmp(PL_ARGS[i].name, name) == 0)
       return i; // pl_arg name found
+
 		if(PL_ARGS[i].shorthand != NULL) 
 			if (strcmp(PL_ARGS[i].shorthand,name) == 0)
 				return i; // pl_arg shorthand found 
 	}
 
-  return -1; // pl_arg was not found in argument_list
+  return PL_ARG_NOT_FOUND; // pl_arg was not found in argument_list
 }
 
 pl_arg *pl_arg_by_name(const char *name){
@@ -307,7 +342,6 @@ int pl_proc(const int argc, const char *argv[]) {
     if (!key || strlen(key) == 0) {
       // invalid or empty key
 			return PL_ARG_INVALID_FORMAT;
-    
 		} else {
       const int argument_index = pl_arg_exist(key);
       if (argument_index != -1) {
@@ -320,6 +354,11 @@ int pl_proc(const int argc, const char *argv[]) {
           	return PL_ARG_REQUIRES_VALUE;
 
           local_argument->triggered = 1;
+					pl_v(VERBOSE,"key: '%s', val: '%s'",key,value);
+					if(strcmp(key,local_argument->shorthand) == 0){
+						pl_v(VERBOSE,"key: '%s' detected as shorthand",key);	
+						local_argument->shorthand_triggered = 1;
+					}
         } else {
 
           /* a key has been provided and a value
