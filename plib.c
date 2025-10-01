@@ -34,10 +34,12 @@ pl_arg *pl_arg_global_ptr(pl_arg in){
 	if(pl_arg_exist(in.name) != PL_SUCCESS){
 		pl_a(in);
 	}
+
 	return pl_arg_by_name(in.name);
 }
 
-#define ph() printf("%s -> %s@%d: ",__FILE__,__func__,__LINE__+1)
+
+#define ph() printf("\x1b[36;49m%s -> %s@%d: \033[0m",__FILE__,__func__,__LINE__+1)
 
 int validate_argument_list() {
   // init pl_arg list
@@ -297,7 +299,8 @@ pl_arg *pl_arg_by_name(const char *name){
 }
 
 int pl_proc(const int argc, const char *argv[]) {
-  PL_ARGC = (int)argc;
+  atexit(pl_exit);
+	PL_ARGC = (int)argc;
 	PL_ARGV = (char **)argv;
 	
 	if (argc <= 1) return PL_NO_ARGUMENTS_GIVEN;
@@ -366,10 +369,11 @@ int pl_proc(const int argc, const char *argv[]) {
 			if(PL_VERBOSE){
 				ph();
 				printf("key: '%s', val: '%s'\n",key,value);
+				ph();
 				printf("argument_index initialized with arg number %d\n",argument_index);
 			}
 
-			if (argument_index >= -1){
+			if (argument_index > -1){
         pl_arg *local_argument = &PL_ARGS[argument_index];
 				if(PL_VERBOSE){
 					ph();

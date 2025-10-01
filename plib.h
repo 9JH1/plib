@@ -100,6 +100,7 @@ extern int PL_PROC_END_ARGC;
 extern char** PL_ARGV;
 extern int PL_ARGC;
 
+#define PL_R(arg) (pl_arg_run(arg) == PL_SUCCESS) ? 1 : 0 
 #define PL_GETN(name) pl_arg_by_name(name)
 #define PL_GETI(idx) &PL_ARGS[idx]
 #define PL_VERSION "4.7" 
