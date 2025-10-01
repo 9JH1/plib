@@ -1,8 +1,7 @@
-#include <stdarg.h>
+#include "plib.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "plib.h"
 
 typedef enum {
   ERROR,
@@ -15,28 +14,8 @@ int PL_ARGS_IDX      =  0;
 int PL_ARGS_CAP      =  0;
 int PL_PROC_END_ARGC = -1;
 int PL_ARGC          = -1;
-char **PL_ARGV       = NULL;
+char **PL_ARGV       =  NULL;
 
-#define pl_v(mode,format,...) pl_v_i(mode,__func__,__LINE__,__FILE__,format, ##__VA_ARGS__)
-void pl_v_i(mode mode, const char *FUNC, const int LINE, const char *FILE, const char *format, ...) {
-	if(mode == VERBOSE && !PL_VERBOSE) return;
-  va_list args;
-
-	// header
-	printf("%s -> %s %s@%d: ",FILE, mode ? "\033[31;249m[Verbose]" : "\033[31;49m[Error]", FUNC,LINE);
-	
-	// print arguments
-  va_start(args, format);
-  vprintf(format, args);
-	printf("\033[0m");
-  va_end(args);
-	putchar('\n');
-
-}
-
-
-
-char *strdup(const char *s); // Fuck you ALE
 char *strsep(char **stringp, const char *delim) {
   if (*stringp == NULL)
     return NULL;
@@ -50,75 +29,93 @@ char *strsep(char **stringp, const char *delim) {
   return token_start;
 }
 
+
+pl_arg *pl_arg_global_ptr(pl_arg in){
+	if(pl_arg_exist(in.name) != PL_SUCCESS){
+		pl_a(in);
+	}
+	return pl_arg_by_name(in.name);
+}
+
+#define ph() printf("%s -> %s@%d: ",__FILE__,__func__,__LINE__+1)
+
 int validate_argument_list() {
   // init pl_arg list
   if (PL_ARGS_CAP == 0) {
-    PL_ARGS_CAP = 2;
+    PL_ARGS_CAP = PL_INIT_ARG_ALLOC;
     PL_ARGS = malloc(PL_ARGS_CAP * sizeof(pl_arg));
     if (!PL_ARGS) {
-			pl_v(ERROR,"couldent initialize argument list memory");
+			ph();
+			printf("couldent initialize argument list memory\n");
       return PL_ARG_IS_NULL;
     }
-
-		pl_v(VERBOSE,"initialized argument_list");
+		if(PL_VERBOSE){
+			ph();
+			printf("initialized argument_list\n");
+		}
   }
 
   // re-allocate argument_list
-  if (PL_ARGS_CAP== PL_ARGS_IDX) {
+  if (PL_ARGS_CAP == PL_ARGS_IDX) {
     PL_ARGS_CAP *= 2;
     pl_arg *temp = realloc(PL_ARGS, PL_ARGS_CAP * sizeof(pl_arg));
     
 		if (!temp) {
       free(PL_ARGS);
-			pl_v(ERROR,"couldent reallocate memory for argument list");
+			ph();
+			printf("couldent reallocate memory for argument list\n");
       return PL_MEM_ALLOC_ERROR;
     } else PL_ARGS = temp;
 
-		pl_v(VERBOSE,"reallocated memory for argument_list");
+		if(PL_VERBOSE){
+			ph();
+			printf("reallocated memory for argument_list\n");
+		}
   }
 
-  if (PL_ARGS == NULL){ 
-		pl_v(ERROR,"argument list is null after allocation/reallocation");
+  if (PL_ARGS == NULL){
+		ph();
+		printf("argument list is null after allocation/reallocation\n");
 		return PL_ARG_IS_NULL;
 	}
-	
-	pl_v(VERBOSE,"pl_proc exited successfully!\n");
+
   return PL_SUCCESS;
 }
 
 
-
-
-pl_arg *pl_a(pl_arg in) {
+int pl_a(pl_arg in) {
   if (validate_argument_list() != PL_SUCCESS){
 		// no need for argument because issue occured
-		pl_v(ERROR,"validate_argument_list returned with an error");
-		return (pl_arg *){0};
+		return PL_FAILURE;
 	}
 
 	if(in.name == NULL){
-		pl_v(ERROR,"argument call missing .title, this is a required field");
-		return (pl_arg *){0};
+		ph();
+		printf("argument call missing .title, this is a required field\n");
+		return PL_ARG_MISSING_PARAM;
 	}
 
 	// check argument dosent already exist 
 	for(int i = 0; i < PL_ARGS_IDX ;i++){
 		if(PL_ARGS[i].name != NULL)
 			if(strcmp(PL_ARGS[i].name,in.name)==0){
-				pl_v(ERROR,"argument name '%s' already exists\n"); 
-				return (pl_arg *){0};
+				ph();
+				printf("argument name '%s' already exists\n",in.name); 
+				return PL_ARG_PRE_EXISTS;
 			}
 
 		if(PL_ARGS[i].shorthand != NULL && in.shorthand != NULL)
 			if(strcmp(PL_ARGS[i].shorthand,in.shorthand) == 0){
-				pl_v(ERROR,"argument shorthand '%s' already exists\n");
-				return (pl_arg *){0};
+				ph();
+				printf("argument shorthand '%s' already exists\n",in.name);
+				return PL_ARG_PRE_EXISTS;
 			}
 	}
 
 	// preference, remove if wanted
-	if(in.shorthand != NULL && in.takes_value == 1){
-		pl_v(VERBOSE,"argument should not be shorthand and take value");
+	if(in.shorthand != NULL && in.takes_value == 1 && PL_VERBOSE){
+		ph();
+		printf("argument should not be shorthand and take value\n");
 	}
 
 	pl_arg *local =  &PL_ARGS[PL_ARGS_IDX]; 
@@ -132,9 +129,13 @@ pl_arg *pl_a(pl_arg in) {
 	if(local->catagory == NULL) local->catagory = "Options";
 	if(local->takes_value < 1) local->takes_value = 0;
 
-	PL_ARGS_IDX++;
-	pl_v(VERBOSE,"argument created: \"%s\"! \n",in.name);
-	return local;
+	if(PL_VERBOSE){
+		ph();
+		printf("argument created: '%s' at index: %d\n",in.name,PL_ARGS_IDX);
+	}
+
+	PL_ARGS_IDX++;	
+	return PL_ARGS_IDX-1;
 }
 
 int list_contains(const char*item, char **list, const int list_size){
@@ -143,7 +144,6 @@ int list_contains(const char*item, char **list, const int list_size){
 		if(strcmp(list[i],item)==0)
 			return 0; // true 
 	
-	// false 
 	return 1;
 }
 
@@ -172,7 +172,8 @@ void pl_help(void) {
 				catagorys_capacity *= 2;
 				char **temp = realloc(catagorys,catagorys_capacity * sizeof(char *));
 				if(!temp){
-					pl_v(ERROR,"Couldent re-allocate catagorys list.");
+					ph();
+					printf("Couldent re-allocate catagorys list\n");
 					return;
 				}
 				catagorys = temp;
@@ -231,9 +232,9 @@ void pl_help(void) {
 				printf(" | ");
 				rep(longest_type, ' ');
 			}
+
 			// print description 
 			if(loc.description) printf(" | %s",loc.description);
-
 
 			printf("\n");
 		}
@@ -245,27 +246,45 @@ void pl_help(void) {
 }
 
 void pl_exit(void) {
-  if (validate_argument_list() == 0) {
+	if(PL_VERBOSE){
+		ph();
+		printf("Deallocating argument list\n");
+	}
+  if (validate_argument_list() == PL_SUCCESS) {
     for (int i = 0; i < PL_ARGS_IDX; i++) {
       if (PL_ARGS[i].value) {
-        pl_v(VERBOSE, "free'd %lu bytes\n", strlen(PL_ARGS[i].value));
-        free(PL_ARGS[i].value);
+				if(PL_VERBOSE){
+					ph();
+        	printf("free'd %lu bytes from '%s'.value '%s'\n", strlen(PL_ARGS[i].value),PL_ARGS[i].name, PL_ARGS[i].value);
+				}
+
+				free(PL_ARGS[i].value);
       }
     }
-    pl_v(VERBOSE, "free'd argument_list\n");
+    if(PL_VERBOSE){
+			ph();
+			printf("free'd argument_list\n");
+		}
     free(PL_ARGS);
   }
+	if(PL_VERBOSE){
+		ph();
+		printf("PLib is not active now..\n");
+	}
 }
 
-// NEW: added shorthand checker
 int pl_arg_exist(const char *name) {
   for (int i = 0; i < PL_ARGS_IDX; i++){
     if (strcmp(PL_ARGS[i].name, name) == 0)
       return i; // pl_arg name found
 
-		if(PL_ARGS[i].shorthand != NULL) 
+		if(PL_ARGS[i].shorthand != NULL)
 			if (strcmp(PL_ARGS[i].shorthand,name) == 0)
 				return i; // pl_arg shorthand found 
+	}
+	if(PL_VERBOSE){
+		ph();
+		printf("key: '%s' was not found in PL_ARGS\n",name);
 	}
 
   return PL_ARG_NOT_FOUND; // pl_arg was not found in argument_list
@@ -344,41 +363,69 @@ int pl_proc(const int argc, const char *argv[]) {
 			return PL_ARG_INVALID_FORMAT;
 		} else {
       const int argument_index = pl_arg_exist(key);
-      if (argument_index != -1) {
-        pl_arg *local_argument = &PL_ARGS[argument_index];
-        if (!value || strlen(value) == 0) {
-          /* a key has been provided but it has
-           * no value, this is good for if you have
-           * void flags like --help. */
-          if (local_argument->takes_value == 1)
-          	return PL_ARG_REQUIRES_VALUE;
+			if(PL_VERBOSE){
+				ph();
+				printf("key: '%s', val: '%s'\n",key,value);
+				printf("argument_index initialized with arg number %d\n",argument_index);
+			}
 
-          local_argument->triggered = 1;
-					pl_v(VERBOSE,"key: '%s', val: '%s'",key,value);
+			if (argument_index >= -1){
+        pl_arg *local_argument = &PL_ARGS[argument_index];
+				if(PL_VERBOSE){
+					ph();
+					printf("local arg found '%s'\n",local_argument->name);
+				}
+
+
+				if (!value || strlen(value) == 0) {
+          if (local_argument->takes_value == 1){
+          	if(PL_VERBOSE){
+							ph();
+							printf("Returning PL_ARG_REQUIRES_VALUE for key '%s'\n",key);
+						}
+
+						return PL_ARG_REQUIRES_VALUE;
+					}
+
+				// sys arg does not have value	
+        } else {
+          if (local_argument->takes_value == 0){
+          	if(PL_VERBOSE){
+							ph();
+							printf("returning PL_ARG_NO_REQUIRES_VALUE for key '%s'\n",key);
+						}
+						return PL_ARG_NO_REQUIRES_VALUE;
+
+					}
+
+          // set the value
+          local_argument->value = malloc(strlen(value) + 1);
+          if (local_argument->value)
+            strcpy(local_argument->value, value);
+
+          else return PL_MEM_ALLOC_ERROR;
+        }
+				local_argument->triggered = 1;
+				
+
+				if(PL_VERBOSE){
+					ph();
+					printf("key: '%s' has been triggered\n",key);
+				}
+
+				if(local_argument->shorthand != NULL){	
 					if(strcmp(key,local_argument->shorthand) == 0){
-						pl_v(VERBOSE,"key: '%s' detected as shorthand",key);	
+						if(PL_VERBOSE){
+							ph();
+							printf("key: '%s' detected as shorthand\n",key);
+						}
 						local_argument->shorthand_triggered = 1;
 					}
-        } else {
-
-          /* a key has been provided and a value
-           * has also been provided. */
-          if (local_argument->takes_value == 0)
-            return PL_ARG_NO_REQUIRES_VALUE;
-
-          // set the value if needed
-          local_argument->value = malloc(strlen(value) + 1);
-          if (local_argument->value) {
-            strcpy(local_argument->value, value);
-            local_argument->triggered = 1;
-          } else return PL_MEM_ALLOC_ERROR;
-        }
+				}
       } else return PL_ARG_NOT_FOUND;
     }
-
     free(to_free);
   }
-
   return PL_SUCCESS;
 }
 
@@ -386,51 +433,56 @@ int pl_proc(const int argc, const char *argv[]) {
 // useful for void pl_arg flags like --help
 int pl_arg_run(const pl_arg *local) {
   if (validate_argument_list() != PL_SUCCESS){
-    pl_v(ERROR, "argument_list validation failed");
-    return -1;
+    return PL_FAILURE;
 	}
 
   if (!local)
     return PL_ARG_IS_NULL;
 
-  if (local->triggered)
+  if (local->triggered || local->shorthand_triggered)
     return PL_SUCCESS;
-  return PL_FAILURE;
+  
+	return PL_FAILURE;
 }
 
 char *pl_arg_value(const pl_arg *local) {
   if (validate_argument_list() != PL_SUCCESS) {
-    pl_v(ERROR, "argument_list validation failed");
-    return "";
+    return NULL;
   }
 
   if (local->triggered) {
     if (local->value)
       return local->value;
     else {
-      pl_v(ERROR, "pl_arg '%s' is triggered but has no value\n",
-             local->name);
-      return "";
+			ph();
+      printf("pl_arg '%s' is triggered but has no value\n", local->name);
+      return NULL;
     }
   } else {
-    pl_v(ERROR, "pl_arg '%s' does not have a value", local->name);
-    return "";
+		ph();
+    printf("pl_arg '%s' does not have a value\n", local->name);
+    return NULL;
   }
-  pl_v(ERROR, "pl_arg '%s' has not been run", local->name);
-  pl_v(ERROR, "^--> use '*argument_run(pl_arg *)'");
-  return "";
+
+	ph();
+  printf("pl_arg '%s' has not been run\n", local->name);
+  printf("^--> use '*argument_run(pl_arg *)'\n");
+  return NULL;
 }
 
 // EXPERIMENTAL
 int pl_all_triggered() {
   if (validate_argument_list() != PL_SUCCESS)
-    return -1;
+    return PL_FAILURE;
   for (int i = 0; i < PL_ARGS_IDX; i++) {
     const pl_arg *local = &PL_ARGS[i];
     if (pl_arg_run(local) != 0) {
-      pl_v(VERBOSE, "%s flag not triggered", local->name);
-      return 1;
+      if(PL_VERBOSE){
+				ph();
+				printf("%s flag not triggered\n", local->name);
+			}
+			return PL_FAILURE;
     }
   }
-  return 0;
+  return PL_SUCCESS;
 }
