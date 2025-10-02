@@ -39,6 +39,14 @@ int main(const int a, const char *b[]){
 	return 0;
 }
 ```
+# Usage librarys
+> what the lib files provide 
+- plib.h - allows for advanced and fleixable argument parsing/handling.
+- lib/draw.h - provides functions to draw boxes borders and titles, useful if making a TUI interface.
+- lib/ansi.h - defines a bunch of ansi codes that do things eg move caret to pos or change term buffer.
+- lib/gc.h - basic garbage collector.
+- input.h - a input loop that collects mouse and keyboard information.
+All of this is done using standard librarys, so no curses or ncurses.
 # Changelog
 > started 02/10/2025
 1.  
