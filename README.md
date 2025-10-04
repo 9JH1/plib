@@ -49,7 +49,7 @@ int main(const int a, const char *b[]){
 All of this is done using standard librarys, so no curses or ncurses.
 # Changelog
 > started 02/10/2025
-1. added multi argument support 
+1. added multi argument support. 
     before, when using the same arg (that takes a value) twice the second run would overwrite the first runs 
     value, now ive changed `arg.value` to be a `char **` array and ive added `arg.value_idx` and `arg.value_cap` meta
     for use in dma in `pl_proc`. you can now use `pl_arg_count` as a macro that returns the `arg.value_idx` value, below 
