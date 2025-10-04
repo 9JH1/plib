@@ -126,7 +126,10 @@ int pl_a(pl_arg in) {
 	// reset vars 
 	local->triggered = 0;
 	local->shorthand_triggered = 0;
-  local->value = NULL;
+	
+	local->value_cap = 2;
+	local->value_idx = 0;
+  local->value = (char **)malloc(local->value_cap * sizeof(char *));
 
 	if(local->catagory == NULL) local->catagory = "Options";
 	if(local->takes_value < 1) local->takes_value = 0;
@@ -254,19 +257,31 @@ void pl_exit(void) {
 	}
   if (validate_argument_list() == PL_SUCCESS) {
     for (int i = 0; i < PL_ARGS_IDX; i++) {
-      if (PL_ARGS[i].value) {
+			pl_arg *loc = &PL_ARGS[i];
+      if (loc->value_idx > 0) {
+				for(int ii = 0; ii < loc->value_idx; ii++){
+					if(PL_VERBOSE){
+						ph();
+						printf("free'd %lu bytes from '%s'.value[%d] '%s'\n",
+								strlen(loc->value[i]),
+								loc->name,
+								ii,
+								loc->value[ii]);
+					}
+					free(loc->value[ii]);
+				}
 				if(PL_VERBOSE){
 					ph();
-        	printf("free'd %lu bytes from '%s'.value '%s'\n", strlen(PL_ARGS[i].value),PL_ARGS[i].name, PL_ARGS[i].value);
+        	printf("free'd '%s'.value\n", loc->name);
 				}
-
-				free(PL_ARGS[i].value);
+				free(loc->value);
       }
     }
     if(PL_VERBOSE){
 			ph();
 			printf("free'd argument_list\n");
 		}
+
     free(PL_ARGS);
   }
 	if(PL_VERBOSE){
@@ -326,12 +341,28 @@ int pl_proc(const int argc, const char *argv[]) {
         }
 
         local->triggered = 1;
-        local->value[0] = '\0';
+
+				// sneaky dma 
+				if(local->value_idx == local->value_cap){
+					// realloc that shit
+					local->value_cap *= 2;
+					char ** tmp = realloc(local->value,local->value_cap * sizeof (char *));
+					if(!tmp){
+						printf("couldent reallocate memory for values\n");
+						pl_exit(); // NOTE: not sure if I need this or not..
+						return PL_MEM_ALLOC_ERROR;
+					}
+
+					local->value = tmp;
+				}
+
+        local->value[local->value_idx][0] = '\0';
         for (int j = i + 1; j < argc; j++) {
-          strcat(local->value, argv[j]);
+          strcat(local->value[local->value_idx], argv[j]);
           if (j < argc - 1)
-            strcat(local->value, " ");
+            strcat(local->value[local->value_idx], " ");
         }
+				local->value_idx++;
         return PL_SUCCESS;
       }
     }
@@ -403,9 +434,24 @@ int pl_proc(const int argc, const char *argv[]) {
 					}
 
           // set the value
-          local_argument->value = malloc(strlen(value) + 1);
-          if (local_argument->value)
-            strcpy(local_argument->value, value);
+					if(local_argument->value_idx == local_argument->value_cap){
+						// realloc that shit
+						local_argument->value_cap *= 2;
+						char ** tmp = realloc(local_argument->value,local_argument->value_cap * sizeof (char *));
+						if(!tmp){
+							printf("couldent reallocate memory for values\n");
+							pl_exit(); // NOTE: not sure if I need this or not..
+							return PL_MEM_ALLOC_ERROR;
+						}
+
+						local_argument->value = tmp;
+					}
+
+          local_argument->value[local_argument->value_idx] = malloc(strlen(value) + 1);
+          if (local_argument->value){
+            strcpy(local_argument->value[local_argument->value_idx], value);
+						local_argument->value_idx++;
+					}
 
           else return PL_MEM_ALLOC_ERROR;
         }
@@ -449,14 +495,14 @@ int pl_arg_run(const pl_arg *local) {
 	return PL_FAILURE;
 }
 
-char *pl_arg_value(const pl_arg *local) {
-  if (validate_argument_list() != PL_SUCCESS) {
+
+char *pl_arg_value(const pl_arg *local, const int i) {
+  if (validate_argument_list() != PL_SUCCESS)
     return NULL;
-  }
 
   if (local->triggered) {
-    if (local->value)
-      return local->value;
+    if (local->value[i])
+      return local->value[i];
     else {
 			ph();
       printf("pl_arg '%s' is triggered but has no value\n", local->name);

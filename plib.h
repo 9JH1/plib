@@ -25,7 +25,10 @@ typedef struct pl_arg {
 	const char *type;	
 
 	// metadata ( this is overwritten )
-  char *value;
+  char **value;
+	int value_cap;
+	int value_idx;
+
   int triggered;
 	int shorthand_triggered;
 } pl_arg;
@@ -82,7 +85,7 @@ void pl_help(void);
 void pl_exit(void);
 
 // return the value of an arg 
-char* pl_arg_value(const pl_arg *local);
+char* pl_arg_value(const pl_arg *local, const int i);
 
 // create an argument 
 int pl_a(pl_arg in);
@@ -114,5 +117,6 @@ extern int PL_ARGC;
 #define PL_E(i) pl_return_type_string[PL_INVERT(i)]
 #define pl_arg_sys(arg) (arg->triggered == 1) ? ((arg->shorthand_triggered == 1) ? arg->shorthand : arg->name) : NULL
 #define PL_P(...) pl_arg_global_ptr((pl_arg){__VA_ARGS__})
+#define pl_arg_count(parg) parg->value_idx
 #endif // PLIB_H
 
