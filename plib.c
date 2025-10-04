@@ -41,7 +41,7 @@ pl_arg *pl_arg_global_ptr(pl_arg in){
 
 #define ph() printf("\x1b[36;49m%s -> %s@%d: \033[0m",__FILE__,__func__,__LINE__+1)
 
-int validate_argument_list() {
+pl_r validate_argument_list() {
   // init pl_arg list
   if (PL_ARGS_CAP == 0) {
     PL_ARGS_CAP = PL_INIT_ARG_ALLOC;
@@ -85,7 +85,7 @@ int validate_argument_list() {
 }
 
 
-int pl_a(pl_arg in) {
+pl_r pl_a(pl_arg in) {
   if (validate_argument_list() != PL_SUCCESS){
 		// no need for argument because issue occured
 		return PL_FAILURE;
@@ -313,7 +313,7 @@ pl_arg *pl_arg_by_name(const char *name){
 	return &PL_ARGS[index];
 }
 
-int pl_proc(const int argc, const char *argv[]) {
+pl_r pl_proc(const int argc, const char *argv[]) {
   atexit(pl_exit);
 	PL_ARGC = (int)argc;
 	PL_ARGV = (char **)argv;
@@ -481,7 +481,7 @@ int pl_proc(const int argc, const char *argv[]) {
 
 // get bool if pl_arg has been run or not,
 // useful for void pl_arg flags like --help
-int pl_arg_run(const pl_arg *local) {
+pl_r pl_arg_run(const pl_arg *local) {
   if (validate_argument_list() != PL_SUCCESS){
     return PL_FAILURE;
 	}
@@ -520,8 +520,7 @@ char *pl_arg_value(const pl_arg *local, const int i) {
   return NULL;
 }
 
-// EXPERIMENTAL
-int pl_all_triggered() {
+pl_r pl_all_triggered() {
   if (validate_argument_list() != PL_SUCCESS)
     return PL_FAILURE;
   for (int i = 0; i < PL_ARGS_IDX; i++) {
