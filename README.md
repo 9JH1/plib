@@ -17,7 +17,7 @@ int main(const int a, const char *b[]){
 	pl_arg *test = PL_P("--test","basic value arg",1,.type="char *",.shorthand="-t");
 
     // error code var 
-	pl_return_type ret; 
+	pl_r ret; 
 
     // process the system arguments 
 	if((ret = pl_proc(a, b)) == PL_SUCCESS){
@@ -61,7 +61,7 @@ All of this is done using standard librarys, so no curses or ncurses.
 
 int main(const int c, const char *v[]){
 	pl_arg *test = PL_P("--test",.takes_value = 1);
-	pl_return_type ret = PL_FAILURE;
+	pl_r ret = PL_FAILURE;
 	
 	if((ret = pl_proc(c,v)) == PL_SUCCESS){
 		if(PL_R(test)){
