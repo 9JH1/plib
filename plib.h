@@ -52,7 +52,7 @@ typedef enum {
 #define PL_INVERT(n) ((n * -1) - 1)
 
 // PLib string map for return codes
-static const char *pl_return_s[12] = {
+static const char *pl_s[12] = {
     [PL_INVERT(PL_ARG_NOT_FOUND)] = "ARG_NOT_FOUND",
     [PL_INVERT(PL_ARG_REQUIRES_VALUE)] = "ARG_REQUIRES_VALUE",
     [PL_INVERT(PL_ARG_NO_REQUIRES_VALUE)] = "ARG_NO_REQUIRES_VALUE",
@@ -113,7 +113,7 @@ extern int PL_ARGC;
 #define pl_arg_get(name) &PL_ARGS[pl_arg_exist(name)]
 #define PL_LAST_ARG (PL_PROC_END_ARGC >= 0) ? \
 										(PL_ARGV[PL_PROC_END_ARGC]) : \
-										pl_return_type_string[PL_INVERT(PL_NO_ARGUMENTS_GIVEN)]
+										pl_s[PL_INVERT(PL_NO_ARGUMENTS_GIVEN)]
 #define PL_E(i) pl_s[PL_INVERT(i)]
 #define pl_arg_sys(arg) (arg->triggered == 1) ? ((arg->shorthand_triggered == 1) ? arg->shorthand : arg->name) : NULL
 #define PL_P(...) pl_arg_global_ptr((pl_arg){__VA_ARGS__})

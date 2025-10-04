@@ -263,7 +263,7 @@ void pl_exit(void) {
 					if(PL_VERBOSE){
 						ph();
 						printf("free'd %lu bytes from '%s'.value[%d] '%s'\n",
-								strlen(loc->value[i]),
+								strlen(loc->value[ii]),
 								loc->name,
 								ii,
 								loc->value[ii]);

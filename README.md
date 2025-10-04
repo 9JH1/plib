@@ -24,7 +24,7 @@ int main(const int a, const char *b[]){
 
         // check if arguments have been run 
 		if(PL_R(test))
-			printf("'%s'\n", pl_arg_value(test));
+			printf("'%s'\n", pl_arg_value(test),0);
 		
 		if(PL_R(help))
 			pl_help(); 
