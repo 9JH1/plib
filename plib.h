@@ -1,64 +1,224 @@
+/**
+ * @file plib.h 
+ * @brief Basic argument parsing library
+ * 
+ * Plib gives functions to create and manage the system 
+ * arguments of any given function, these arguments can 
+ * be defined with many options for example shorthand 
+ * and long-hand versions of the same ag eg 
+ * `--help` and `-h`. 
+ *
+ * Arguments are dynamically allocated and free'd 
+ * automatically on exit so you dont have to worry 
+ * about any memory leaks. Along with this plib provides 
+ * a builtin function called @ref pl_help which prints 
+ * out all of the arguments in a standard format. 
+ * 
+ * In order to get started with plib first you must include 
+ * the system arguments into your main function, for reference
+ * look here: 
+ * @ref "https://www.ibm.com/docs/en/zos/2.4.0?topic=functions-main-function"
+ * 
+ * To create an argument use @ref pl_a @ref PL_A or @ref PL_P,
+ * read the structure declaration @ref pl_arg to learn all of 
+ * the options.
+ * @code 
+ * #include "plib.h"
+ *
+ * int main(const int c, const char *v[]){
+ *   pl_arg * my_arg = PL_P("--my-arg", "basic first argument!");
+ *   pl_proc(c,v);
+ *   pl_help();
+ *	 return 0;
+ * }
+ * @endcode
+ * As you can see we defined an argument called my_arg with 
+ * the flag name of `--my-arg` and a description of "basic first argument".
+ * running this code outputs the following:
+ * @code 
+ * Options:
+ *   --my-arg | basic first argument!
+ * @endcode
+ * To check if an argument is run use @ref PL_R or @ref pl_arg_run like so 
+ * @code 
+ * #include <stdio.h>
+ * // ...
+ * if(PL_R(my_arg))
+ *   printf("Hello World!\n");
+ * // ... 
+ * @endcode
+ * Now if we run our program it will print back "Hello World!" To take an value
+ * with an argument you simply put .takes_value = 1 in the argument definition 
+ * like so:
+ * @code 
+ * // ...
+ * pl_a * my_arg = PL_P("--my-arg","basic first argument!", .takes_value = 1);
+ * // ...
+ * @endcode 
+ * if the code is run the same as before you will now notice we do not get the 
+ * "Hello World!" output anymore , this is because plib failed to parse the 
+ * `--my-arg argument` and instead threw an error because it was missing a value. 
+ * simple error checking can be done like so 
+ * @code 
+ * // ...
+ * pl_r return_code;
+ * if((return_code = PL_PROC(c,v)) == PL_SUCCESS){
+ *   // plib parsed all argument sucessfully.
+ *
+ * } else {
+ *   // error occured
+ *   printf("Error occured %s from %s\n",
+ *     PL_E(return_code),
+ *     PL_LAST_ARG);
+ * }
+ * // ...
+ * @endcode
+ * Now if we run the program with the same arguments we will get an output like 
+ * so: 
+ * @code 
+ * Error occured ARG_REQUIRES_VALUE from --my-arg
+ * @endcode 
+ * PLib uses '--key=val' argument value style, so to resolve this plib error run 
+ * the program with --my-arg="value". 
+ *
+ * To get the value of an arg either use @ref pl_arg_value like so:
+ * @code 
+ * // ... 
+ * if(PL_R(my_arg))
+ *   printf("Argument run with value %s\n",
+ *     pl_arg_value(my_arg) ); // get argument value 
+ * @endcode 
+ * Now running the program will print out whatever value has been parsed.
+ * here is the full example of what we just went over: 
+ * @code 
+ * #include <stdio.h>
+ * #include "plib.h"
+ *
+ * int main(const int c, const char *v[]){
+ *   pl_arg * my_arg = PL_P("--my-arg","my argument!", .takes_value = 1);
+ *   pl_r return_code;
+ *   
+ *   if((return_code = pl_proc(c,v)) == PL_SUCCESS){
+ *     if(PL_R(my_arg))
+ *      printf("Argument run with value %s\n", 
+ *      pl_arg_value(my_arg) ); // get argument value 
+ *   } else {
+ *     
+ *     // error occured
+ *     printf("Error occured %s from %s\n",
+ *       PL_E(return_code),
+ *       PL_LAST_ARG);
+ *   }
+ *
+ *   return 0;
+ * }
+ * @endcode
+ **/
 #ifndef PLIB_H
 #define PLIB_H
 #ifndef PL_INIT_ARG_ALLOC 
-#define PL_INIT_ARG_ALLOC 2 // initial amount of arguments
+/**
+ * @brief initial argument alloc amount 
+ *
+ * PLib adds each new argument to an array of pl_a structs.
+ * this value is the initial start value of plib, note that 
+ * if you want to optimize your code and use @ref PL_A instead 
+ * of @ref PL_P then increase this value to the same amount of 
+ * arguments you intend on defining.
+ **/
+#define PL_INIT_ARG_ALLOC 2
 #endif
 
 #ifdef PL_VERBOSE_ENABLE
+/**
+ * @brief enables verbose logs 
+ *
+ * To enable verbose logs use the `-DPL_VERBOSE_ENABLE` 
+ * flag when running `gcc`
+ **/
 #define PL_VERBOSE 1 
 #else 
 #define PL_VERBOSE 0
 #endif
 #define PL_VERSION "4.7" 
 
-/* This is the generic argument structure,
- * it contains all of the options that you 
- * may need or want idk. */
+/** 
+ * @brief argument options 
+ * @param name flag name eg `--help`
+ * @param description flag description (used in @ref pl_help)
+ * @param takes_value set whether or not the argument should expect a value 
+ * @param catagory set a catagory for an argument, arguments of the same catagory are printed 
+ *        togeather in @ref pl_help
+ * @param type type of value, not actuall enforced but used in @ref pl_help instead. eg VOID or INT.
+ * @param value if `.takes_value = 1` then the value(s) parsed in will be allocated here.
+ * @param value_cap Value is dynamically allocated this is a variable used in the DMA.
+ * @param value_idx same as value_cap but this value also is the amount of arguments parsed 
+ *        into the flag, this doubles as the run count of any arguments that take a value.
+ * @param triggered this value is `>1` if the argument was run and is `0` if the arg was not run.
+ *        this doubles as the run count for all arguments
+ **/
 typedef struct pl_arg {
-	const char *name;        // the flag name eg --test or --help 
-  const char *description; // flag description (used in help page) 
-	int takes_value;         // tell parser if flag takes arg, 0 = false, 1 = true
-
-	// used in the help page 
+	const char *name;       
+  const char *description;
+	int takes_value; 
 	const char *catagory; 
-
-  /* shorthand of the same arg eg if the arg is
-	 * --help maybe the sorthand is -h */
 	const char *shorthand; 
-	
-	/* if you have takes_arg set to true you can add a 
-	 * type string to the flag eg "void" or "char *". 
-	 * this is used in the help page */
 	const char *type;	
-
-	// other misc metadata (overwritten on pl_a)
   char **value;
 	int value_cap;
 	int value_idx;
-
   int triggered;
 	int shorthand_triggered;
 } pl_arg;
 
-// array of arguments 
+/**
+ * @brief PLibs local array of arguments.
+ * @see PL_ARGS_IDX
+ * @see PL_ARGS_CAP
+ **/
 extern pl_arg *PL_ARGS;
 
-// amount of items in PL_ARGS 
+/** 
+ * @brief PLibs local count of arguments 
+ * @see PL_ARGS_IDX
+ * @see PL_ARGV
+ **/
 extern int PL_ARGS_IDX;
 
-// capacity of items in PL_ARGS 
+/**
+ * @brief PL_ARGS capacity used for DMA.
+ * @see PL_ARGS
+ * @see PL_ARGS_IDX
+ **/
 extern int PL_ARGS_CAP;
 
-// a local copy of whatever is parsed into pl_proc  
+/**
+ * @brief local copy of argument array parsed into @ref pl_proc 
+ */
 extern char** PL_ARGV;
+
+/** 
+ * @breif local copy of argument count parsed into @ref pl_proc 
+ **/
 extern int PL_ARGC;
 
-// idx of last parsed argument
+/** 
+ * @brief index of PL_ARGC that was last parsed by @ref pl_proc 
+ *        used in error checking if pl_proc throws an error this 
+ *        value is the index of argument that caused the error.
+ **/
 extern int PL_PROC_END_ARGC; 
 
 
-/* most of the PLib functions use these codes 
- * as return values */
+/** 
+ * @brief PLib return codes 
+ * 
+ * These codes are used by most plib functions a code can be turned
+ * into a string using the @ref PL_E function. The strings used for 
+ * error codes can be read in the @ref pl_r array.
+ * @see PL_E 
+ * @see pl_s
+ **/
 typedef enum {
 	PL_ARG_NOT_FOUND = -1,
 	PL_ARG_REQUIRES_VALUE = -2,
@@ -74,13 +234,19 @@ typedef enum {
 } pl_r;
 
 
-/* PL_INVERT is a silly function used to convert a negative 
- * number above and not equal to zero into a positive num - 1 */
+/** 
+ * @brief Convert -n to n-1, used for converting @ref pl_r enum to valid array index in @ref pl_s 
+ * @param n int to invert - 1 
+ * @see pl_s
+ **/
 #define PL_INVERT(n) ((n * -1) - 1)
 
 
-/* list of pl_r codes and a string version, this is used in error 
- * handling as you can call PL_E to get a return code as a string */
+/** 
+ * @brief list of error code strings 
+ * @see PL_E 
+ * @see pl_r 
+ **/
 static const char *pl_s[12] = {
     [PL_INVERT(PL_ARG_NOT_FOUND)] = "ARG_NOT_FOUND",
     [PL_INVERT(PL_ARG_REQUIRES_VALUE)] = "ARG_REQUIRES_VALUE",
@@ -96,20 +262,78 @@ static const char *pl_s[12] = {
 };
 
 
-/* takes in a string name and searches PL_ARGS to check if 
+/** 
+ * @breif check if argument exists using flag name 
+ * 
+ * takes in a string name and searches PL_ARGS to check if 
  * the parsed string exists as a argument flag in the args 
  * array. if it does return PL_SUCCESS, if not return 
- * PL_FALIURE */
+ * PL_FALIURE 
+ *
+ * @param name String .name of pl_arg to search for.
+ * */
 pl_r pl_arg_exist(const char *name);
 
 
-/* takes in an array of strings and a count and parses 
- * them in comparison to the arguments set using pl_a */ 
+/**
+ * @brief takes in an argc and argv and parse them 
+ *        in comparison to the arguments in PL_ARGS. 
+ * @param argc count of command line arguments 
+ * @param argv char array of command line arguments
+ * @see PL_PROC 
+ **/ 
 pl_r pl_proc(const int argc, const char *argv[]);
 
+/** 
+ * @brief macro for removing the PL_SUCCESS check and argv and argc params.
+ * 
+ * This macro will automatically include argc and argv, this will work as long 
+ * as `argc` and `argv` are defined and are of the correct types. 
+ *
+ * examples before:
+ * @code 
+ * // ... 
+ * if(pl_proc(argc, argv) == PL_SUCCESS){
+ *   // ... 
+ * }
+ * // ...
+ * @endcode 
+ *
+ * and after
+ * @code 
+ * // ... 
+ * if(PL_PROC()){
+ *   // ...
+ * }
+ * // ...
+ * @endcode 
+ **/
+#define PL_PROC() (pl_proc(argc,argv) == PL_SUCCESS)
 
-/* see if an pl_arg has been triggered (run) */
+
+/** 
+ * @brief check if argument has been run 
+ * 
+ * You can instead use the @ref PL_R macro 
+ * which similar to the @ref PL_PROC macro 
+ * just removes the comparison to PL_SUCCESS 
+ * which cuts back on the line size and general 
+ * clutter.
+ *
+ * @param local pl_arg * argument to check 
+ * @see PL_P 
+ * @see PL_R 
+ **/
 pl_r pl_arg_run(const pl_arg *local);
+
+/**
+ * @brief check if argument has been run without PL_SUCCESS comparison 
+ * this macro just removes the need to use the PL_SUCCESS comparison 
+ * which removes clutter and line size.
+ * @param arg pl_arg *  
+ * @see pl_arg_run
+ **/ 
+#define PL_R(arg) pl_arg_run(arg) == PL_SUCCESS
 
 
 /* returns PL_SUCCESS of if ALL arguments set where used 
@@ -244,7 +468,6 @@ pl_arg *pl_arg_by_name(const char *name);
 
 
 // auto grab argv and argc if they are named as such.
-#define PL_PROC() pl_proc(argc,argv)
 
 
 /* get the last argument parsed by pl_proc, 
