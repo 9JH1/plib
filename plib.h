@@ -130,7 +130,8 @@
 #endif
 
 #ifdef PL_VERBOSE_ENABLE
-/**
+
+ /**
  * @brief enables verbose logs 
  *
  * To enable verbose logs use the `-DPL_VERBOSE_ENABLE` 
@@ -138,8 +139,16 @@
  **/
 #define PL_VERBOSE 1 
 #else 
+/**
+ * @brief enables verbose logs 
+ * To enable verbose logs use the `-DPL_VERBOSE_ENABLE`
+ * flag when running `gcc`
+ **/
 #define PL_VERBOSE 0
 #endif
+/**
+ * @brief Plib version 
+ **/
 #define PL_VERSION "4.7" 
 
 /** 
