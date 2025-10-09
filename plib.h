@@ -53,6 +53,10 @@ extern int PL_ARGS_CAP;
 extern char** PL_ARGV;
 extern int PL_ARGC;
 
+// idx of last parsed argument
+extern int PL_PROC_END_ARGC; 
+
+
 /* most of the PLib functions use these codes 
  * as return values */
 typedef enum {

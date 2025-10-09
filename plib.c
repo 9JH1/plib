@@ -151,7 +151,8 @@ int list_contains(const char*item, char **list, const int list_size){
 	return 1;
 }
 
-void rep(const int l, const int c){
+void rep(const int l, const char c){
+	if(l <= 0) return;
 	for(int i = 0; i < l; i++)
 		printf("%c",c);
 }
@@ -202,6 +203,17 @@ void pl_help(void) {
 	}
 	
 	// for each catagory 
+	if(PL_VERBOSE){
+		ph();
+		printf("longest_name: %d\n",longest_name);
+		
+		ph();
+		printf("longest_type: %d\n",longest_type);
+
+		ph();
+		printf("longest_shorthand: %d\n",longest_shorthand);
+	}
+
 	for(int i = 0; i < catagorys_index; i++){
 		const char* cat = catagorys[i]; // :3	
 		printf("\033[1m%s:\033[0m\n",cat);
@@ -218,7 +230,7 @@ void pl_help(void) {
 			// print name 
 			if(loc.name != NULL && longest_name != 0){
 				printf("%s",loc.name);
-				rep(strlen(loc.name) - longest_name,' ');
+				rep(longest_name - strlen(loc.name),' ');
 			}
 			
 			// print shorthand
