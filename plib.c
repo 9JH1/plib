@@ -29,7 +29,6 @@ char *strsep(char **stringp, const char *delim) {
   return token_start;
 }
 
-
 pl_arg *pl_arg_global_ptr(pl_arg in){
 	if(pl_arg_exist(in.name) != PL_SUCCESS){
 		pl_a(in);
