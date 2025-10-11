@@ -69,8 +69,6 @@ typedef struct {
 
   // features
   int takes_value;
-  int take_rest;
-	char split_char;
 
   // cannot be changed
   int _short_run;
@@ -88,6 +86,11 @@ typedef struct node {
 
 node PL_ARGS;
 int PL_ARG_LAST_INDEX = 0;
+int PL_ARGC;
+char **PL_ARGV;
+char PL_SPLITCHAR = '=';
+int PL_ARG_NOT_FOUND_ERROR = 1;
+
 int pl_arg_exist(node **buf, const char *name) {
   *buf = &PL_ARGS;
 
@@ -150,6 +153,10 @@ int pl_proc(const int c, char *v[]) {
     return PL_NO_ARGS_GIVEN;
 
   int return_code = PL_SUCCESS;
+	
+	// set locals
+	PL_ARGV=v;
+	PL_ARGC=c;
 
   for (int i = 1; i < c; i++) {
     PL_ARG_LAST_INDEX = i;
@@ -157,14 +164,11 @@ int pl_proc(const int c, char *v[]) {
     char *arg = v[i];
     char *key, *val = NULL;
 
-    split_arg(&key, &val, arg, '=');
-    printf("parsed %s into %s : %s\n", arg, key, val);
+    split_arg(&key, &val, arg, PL_SPLITCHAR);
 
     node *arg_node = NULL;
     if (pl_arg_exist(&arg_node, key) == PL_SUCCESS && arg_node != NULL &&
         arg_node->init == 1) {
-      printf("arg found: %s\n", arg_node->arg.flag);
-      printf("arg takes value: %d\n", arg_node->arg.takes_value);
 
       // check if arg needs value
       if (arg_node->arg.takes_value == 1 && val == NULL) {
@@ -204,8 +208,9 @@ int pl_proc(const int c, char *v[]) {
           value->index++;
         }
       }
-    } else
+    } else if (PL_ARG_NOT_FOUND_ERROR){
       return_code = PL_ARG_NOT_FOUND;
+		}
     free(key);
     free(val);
     if (return_code != PL_SUCCESS)
@@ -335,14 +340,21 @@ void pl_help() {
 }
 
 int main(const int c, char *argv[]) {
-  PL_A(.flag = "test1", .short_flag = "-t", .cat = "test1");
-  pl_arg *test2 = PL_A(.flag = "test2", .takes_value = 1);
+	pl_arg *test1 = PL_A(.flag = "--test", "basic test arg",.takes_value=1);
+  
+	PL_ARG_NOT_FOUND_ERROR = 0;
 
+	pl_proc(c, argv);
+  if (PL_R(test1))
+    for (int i = 0; i < test1->_value.index; i++)
+      printf("value: %s\n", pl_get_value(test1, i));
+	
+	pl_arg *test2 = PL_A(.flag = "-", .takes_value = 1);
+	PL_SPLITCHAR = 'D';
   pl_proc(c, argv);
 
   if (PL_R(test2))
     for (int i = 0; i < test2->_value.index; i++)
       printf("value: %s\n", pl_get_value(test2, i));
-  else pl_help();
   return 0;
 }
