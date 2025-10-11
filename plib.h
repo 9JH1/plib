@@ -156,7 +156,7 @@
  * @param name flag name eg `--help`
  * @param description flag description (used in @ref pl_help)
  * @param takes_value set whether or not the argument should expect a value 
- * @param catagory set a catagory for an argument, arguments of the same catagory are printed 
+ * @param category set a category for an argument, arguments of the same category are printed 
  *        togeather in @ref pl_help
  * @param type type of value, not actuall enforced but used in @ref pl_help instead. eg VOID or INT.
  * @param value if `.takes_value = 1` then the value(s) parsed in will be allocated here.
@@ -170,7 +170,7 @@ typedef struct pl_arg {
 	const char *name;       
   const char *description;
 	int takes_value; 
-	const char *catagory; 
+	const char *category; 
 	const char *shorthand; 
 	const char *type;	
   char **value;

@@ -130,7 +130,7 @@ pl_r pl_a(pl_arg in) {
 	local->value_idx = 0;
   local->value = (char **)malloc(local->value_cap * sizeof(char *));
 
-	if(local->catagory == NULL) local->catagory = "Options";
+	if(local->category == NULL) local->category = "Options";
 	if(local->takes_value < 1) local->takes_value = 0;
 
 	if(PL_VERBOSE){
@@ -172,7 +172,7 @@ void pl_help(void) {
 		const pl_arg loc = PL_ARGS[i];
 
 		// check catagory 
-		if(list_contains(loc.catagory,catagorys,catagorys_index)==1){
+		if(list_contains(loc.category,catagorys,catagorys_index)==1){
 			if(catagorys_index == catagorys_capacity){
 				catagorys_capacity *= 2;
 				char **temp = realloc(catagorys,catagorys_capacity * sizeof(char *));
@@ -184,7 +184,7 @@ void pl_help(void) {
 				catagorys = temp;
 			}
 
-			catagorys[catagorys_index] = (char *)PL_ARGS[i].catagory;
+			catagorys[catagorys_index] = (char *)PL_ARGS[i].category;
 			catagorys_index++;
 		}
 
@@ -222,9 +222,9 @@ void pl_help(void) {
 		for(int ii = 0; ii < PL_ARGS_IDX; ii++){
 			const pl_arg loc = PL_ARGS[ii];
 
-			if(loc.catagory != NULL){
+			if(loc.category != NULL){
 				// skip argument if it dosent match catagory 
-				if(strcmp(loc.catagory,cat)!=0) continue;
+				if(strcmp(loc.category,cat)!=0) continue;
 			}
 
 			// print name 
