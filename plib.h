@@ -453,20 +453,6 @@ pl_arg *pl_arg_global_ptr(pl_arg in);
 pl_arg *pl_arg_by_name(const char *name);
 
 
-/* basic optimize macro for pl_arg_run, 
- * before after:
- * 
- * if(pl_arg_run(arg) == PL_SUCCESS){
- * ... 
- * }
- *
- * if(PL_R(arg)){
- * ...
- * }
- * */
-#define PL_R(arg) (pl_arg_run(arg) == PL_SUCCESS) ? 1 : 0 
-
-
 // wrapper for pl_arg_get_name...
 #define PL_GETN(name) pl_arg_by_name(name)
 
