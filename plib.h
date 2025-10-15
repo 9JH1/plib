@@ -20,7 +20,7 @@
 
 #define PL_HELP_SEP_ANSI "\033[34m"
 #define PL_HELP_SEL_ANSI "\033[32m"
-
+#define PL_HELP_SEP " "
 /**
  * @brief return codes of various functions 
  * @see pl_s 
@@ -143,6 +143,7 @@ extern node PL_ARGS;
  **/ 
 extern char **PL_ARGV;
 
+extern int PL_MEM_USE;
 /** 
  * @brief what character to split arguments at 
  * 
@@ -213,7 +214,7 @@ extern int PL_ARG_NOT_FOUND_ERROR;
  * @see PL_PROC
  * @see node
  **/
-void free_nodes();
+void pl_free();
 
 /**
  * @brief help menu 
@@ -359,5 +360,17 @@ char *pl_get_value(const pl_arg *arg, const int i);
  * @see pl_arg 
  **/
 #define PL_R(arg) (arg->_value.index > 0)
+
+/** 
+ * @brief returns a stringifyed version of an error code 
+ * @see pl_s 
+ * @see pl_r 
+ **/ 
+#define PL_E(ret) pl_s[(ret+1)*-1]
+
+/**
+ * @brief gets the last argument parsed by plib 
+ **/
+#define PL_LAST_ARG (PL_ARG_LAST_INDEX >= 0) ? PL_ARGV[PL_ARG_LAST_INDEX] : NULL
 
 #endif // PLIB 
