@@ -21,15 +21,15 @@ int PL_MEM_USE = 1;
 
 void *MALLOC(size_t in) {
   PL_MEM_USE += in;
-  print("pl memory changed to %d (+%d)\n", PL_MEM_USE, in);
+  //print("pl memory changed to %d (+%d)\n", PL_MEM_USE, in);
   return malloc(in);
 }
 
 void *REALLOC(void *in, size_t new, size_t old) {
   PL_MEM_USE -= old;
-  printf("pl memory changed to %d (-%lu)\n", PL_MEM_USE, old);
+  //print("pl memory changed to %d (-%lu)\n", PL_MEM_USE, old);
   PL_MEM_USE += new;
-  printf("pl memory changed to %d (+%lu)\n", PL_MEM_USE, new);
+  //print("pl memory changed to %d (+%lu)\n", PL_MEM_USE, new);
   return realloc(in, new);
 }
 
@@ -37,7 +37,7 @@ void FREE(void *in, size_t size) {
   if (in == NULL)
     return;
   PL_MEM_USE -= size;
-  print("pl memory changed to %d (-%lu)\n", PL_MEM_USE, sizeof(in));
+  //print("pl memory changed to %d (-%lu)\n", PL_MEM_USE, sizeof(in));
   free(in);
 }
 
@@ -79,13 +79,14 @@ int PL_ARG_LAST_INDEX = -1;
 int PL_ARGC;
 char **PL_ARGV;
 char PL_SPLITCHAR = '=';
+char *PL_LAST_ARG;
 int PL_ARG_NOT_FOUND_ERROR = 1;
 
 int pl_arg_exist(node **buf, const char *name) {
   *buf = &PL_ARGS;
   int idx;
 
-  while (*buf != NULL) {
+  while ((*buf)->init == 1) {
     if (name != NULL && (*buf)->init == 1) {
       if ((*buf)->arg.flag != NULL && strcmp((*buf)->arg.flag, name) == 0) {
         print("node found at index %d\n", idx);
@@ -131,7 +132,22 @@ int get_next_node_i(void) {
 }
 
 pl_arg *pl_a(pl_arg in) {
-  node *cur = get_next_node();
+  node *cur;
+
+	if(in.short_flag != NULL){
+		if(pl_arg_exist(&cur,in.short_flag) == PL_SUCCESS){
+			print("argument with this shorthand '%s' already defined.. skipping\n",
+					in.short_flag);
+			return (pl_arg *){0};
+		}
+	}
+
+	if(pl_arg_exist(&cur,in.flag) == PL_SUCCESS){
+		printf("argument with this flag '%s' already defined.. skipping\n",in.flag);
+		return (pl_arg *){0};
+	}
+
+	cur = get_next_node();
 
   cur->init = 1;
   cur->arg = in;
@@ -144,12 +160,32 @@ pl_arg *pl_a(pl_arg in) {
   }
 
   if (cur->arg.cat == NULL)
-    cur->arg.cat = "Options:";
+    cur->arg.cat = "Options";
 
   int node_size = sizeof(node);
   cur->next = MALLOC(node_size);
   print("allocated %lu bytes for new node\n", node_size);
   return &cur->arg;
+}
+
+pl_r alloc_last_arg(const char *arg) {
+  if (arg == NULL)
+    return PL_FAIL;
+
+  size_t arg_size = strlen(arg);
+
+  size_t old_size = strlen(PL_LAST_ARG) * sizeof(char);
+  PL_LAST_ARG = NULL;
+  char *tmp = REALLOC(PL_LAST_ARG, arg_size * sizeof(char), old_size);
+  if (!tmp) {
+    print("Error in realloc%s\n", "");
+    return PL_MEM_ALLOC_ERROR;
+  }
+
+  PL_LAST_ARG = tmp;
+  strcpy(PL_LAST_ARG, arg);
+
+  return PL_SUCCESS;
 }
 
 pl_r pl_proc(const int c, char *v[]) {
@@ -162,11 +198,18 @@ pl_r pl_proc(const int c, char *v[]) {
   PL_ARGV = v;
   PL_ARGC = c;
 
+  PL_LAST_ARG = MALLOC(32);
+
   for (int i = 1; i < c; i++) {
     PL_ARG_LAST_INDEX = i;
 
     char *arg = v[i];
     char *key, *val = NULL;
+
+    if (alloc_last_arg(v[i]) == PL_MEM_ALLOC_ERROR) {
+      print("last arg alloc failed%s\n", "");
+      return PL_MEM_ALLOC_ERROR;
+    }
 
     split_arg(&key, &val, arg, PL_SPLITCHAR);
 
@@ -181,6 +224,7 @@ pl_r pl_proc(const int c, char *v[]) {
         // check if arg does not need value
       } else if (arg_node->arg.takes_value == 0 && val != NULL) {
         return_code = PL_ARG_NO_REQUIRE_VALUE;
+
       } else {
 
         // check if argument was shorthand
@@ -199,7 +243,7 @@ pl_r pl_proc(const int c, char *v[]) {
                 realloc(value->array, value->capacity * sizeof(char *));
             if (!tmp) {
               return_code = PL_MEM_ALLOC_ERROR;
-              FREE(value->array, sizeof(value->array));
+              FREE(value->array, value->index * sizeof(char *));
               break;
             }
             value->array = tmp;
@@ -208,15 +252,36 @@ pl_r pl_proc(const int c, char *v[]) {
           value->array[value->index] = MALLOC(sizeof(val));
           strcpy(value->array[value->index], val);
           value->index++;
-        }
+          // increment for non-value-taking args
+        } else
+          arg_node->arg._value.index++;
       }
     } else if (PL_ARG_NOT_FOUND_ERROR) {
       return_code = PL_ARG_NOT_FOUND;
     }
-    FREE(key, sizeof(key));
-    FREE(val, sizeof(key));
+
+    FREE(key, strlen(key));
+
+		if(val != NULL)
+    	FREE(val, strlen(val));
+		else FREE(val,0);
     if (return_code != PL_SUCCESS)
+
       break;
+  }
+
+  if (return_code == PL_SUCCESS) {
+
+    // check all required args where run
+    node *cur = &PL_ARGS;
+    while (cur->init == 1) {
+      alloc_last_arg(cur->arg.flag);
+      if (cur->arg.required == 1 && cur->arg._value.index <= 0) {
+        return PL_ARG_REQUIRED;
+      }
+
+      cur = cur->next;
+    }
   }
 
   return return_code;
@@ -229,19 +294,23 @@ void pl_free() {
   while (cur != NULL) {
     print("starting de-alloc on node index %d\n", rec_lev);
     node *next = cur->next;
+
     if (cur->arg.takes_value && cur->arg._value.array != NULL) {
       for (int i = 0; i < cur->arg._value.index; i++) {
         if (cur->arg._value.array[i] != NULL) {
           size_t val_size = strlen(cur->arg._value.array[i]) + 1;
           print("free'd %lu bytes of mem for value[%d]\n", val_size, i);
-          FREE(cur->arg._value.array[i], val_size);
+          FREE(cur->arg._value.array[i], val_size * sizeof(char));
           cur->arg._value.array[i] = NULL;
         }
       }
-      print("free'd %lu bytes of mem for value array\n",
+
+			print("free'd %lu bytes of mem for value array\n",
             cur->arg._value.capacity * sizeof(char *));
-      FREE(cur->arg._value.array, cur->arg._value.capacity * sizeof(char *));
-      cur->arg._value.array = NULL;
+      
+			FREE(cur->arg._value.array, cur->arg._value.capacity * sizeof(char *));
+      
+			cur->arg._value.array = NULL;
     }
     if (cur != &PL_ARGS) {
       print("free'd %lu bytes of mem for node\n", sizeof(node));
@@ -250,6 +319,14 @@ void pl_free() {
     cur = next;
     rec_lev++;
   }
+
+	size_t last_arg_size = 0;
+
+	if(PL_LAST_ARG != NULL){
+		last_arg_size = strlen(PL_LAST_ARG) * sizeof(char);
+	}
+
+  FREE(PL_LAST_ARG,last_arg_size);
 
   print("exiting plib with %d bytes of memory held\n", PL_MEM_USE);
 }
@@ -281,17 +358,11 @@ int in(const char *in, char **arr, const size_t size) {
   return 0;
 }
 
-// arg count squared recurse model
-void pl_help() {
+void pl_help_print_cat(const char *cat) {
   node *cur = &PL_ARGS;
-
   size_t l_flag = 0, l_type = 0, l_short = 0;
 
-  int cat_idx = 0;
-  int cat_cap = 2;
-  char **cats = MALLOC(cat_cap * sizeof(char *));
-
-  // pre-run
+  // loop through and get longest values
   while (cur->init == 1) {
     pl_arg a = cur->arg;
 
@@ -304,10 +375,96 @@ void pl_help() {
     if (a.short_flag != NULL && strlen(a.short_flag) > l_short)
       l_short = strlen(a.short_flag);
 
+    cur = cur->next;
+  }
+
+  // reset the cur object
+  cur = &PL_ARGS;
+
+  // print the category name
+  printf("\033[1m%s\033[0m\n", cat);
+
+  // loop through each node`
+  while (cur->init == 1) {
+
+    // skip if the arg dosent have the current category
+    if (strcmp(cur->arg.cat, cat) != 0) {
+
+			// recurse to the next node
+  		cur = cur->next;
+      continue;
+    }
+		
+    pl_arg arg = cur->arg;
+
+		// indent the argument
+    rep(PL_HELP_CAT_INDENT, ' ');
+
+		// print the argument name 
+    printf("%s%s", PL_HELP_SEL_ANSI, arg.flag);
+
+		// print required indicator
+    if (arg.required)
+      printf("\033[31m*\033[0m");
+    else
+      printf(" ");
+
+
+    rep(l_flag - strlen(arg.flag), ' ');
+
+		// if at least one argument has a shorthand 
+    if (l_short != 0) {
+
+			// if the current argumenbt has a shorthand 
+      if (arg.short_flag != NULL) {
+        printf("%s%s%s", PL_HELP_SEP,PL_HELP_SEL_ANSI, arg.short_flag);
+
+        rep(l_short - strlen(arg.short_flag), ' ');
+      } else
+				// if not then print some filler space 
+        rep(l_short + 2, ' ');
+    }
+
+		// print takes-value indicator 
+    if (arg.takes_value)
+      printf("%s%s\033[0m value of", PL_HELP_SEP, PL_HELP_SEP_ANSI);
+    else
+      printf("%s%s\033[0m no value", PL_HELP_SEP, PL_HELP_SEP_ANSI);
+
+		// if at least one argument has a type 
+    if (l_type != 0) {
+
+			// if the current arg has a type 
+      if (arg.type != NULL) {
+        printf("%s%s%s%s", PL_HELP_SEP, PL_HELP_SEP_ANSI,PL_HELP_SEL_ANSI,arg.type);
+        rep(l_type - strlen(arg.type), ' ');
+      } else
+				// or if not print some space 
+        rep(l_type + 4, ' ');
+    }
+
+		// print the description 
+    printf("%s%s\033[0m %s\n", PL_HELP_SEP, PL_HELP_SEP_ANSI, arg.desc);
+		
+		// recurse to the next node
+  	cur = cur->next;
+  }
+}
+
+void pl_help() {
+  node *cur = &PL_ARGS;
+
+  int cat_idx = 0;
+  int cat_cap = 2;
+  char **cats = MALLOC(cat_cap * sizeof(char *));
+
+  // pre-run
+  while (cur->init == 1) {
+    pl_arg a = cur->arg;
     if (!in(a.cat, cats, cat_idx)) {
       if (cat_idx == cat_cap) {
         cat_cap *= 2;
-        REALLOC(cats, cat_cap * sizeof(char *), (cat_cap/2) * sizeof(char *));
+        REALLOC(cats, cat_cap * sizeof(char *), (cat_cap / 2) * sizeof(char *));
 
         if (!cats) {
           printf("error in mem alloc\n");
@@ -322,48 +479,24 @@ void pl_help() {
   }
 
   for (int i = 0; i < cat_idx; i++) {
-    char *cur_cat = cats[i];
-    cur = &PL_ARGS;
-    printf("\033[1m%s\033[0m\n", cur_cat);
-
-    while (cur->init == 1) {
-      if (strcmp(cur->arg.cat, cur_cat) == 0) {
-
-        // print arguments in cat
-        pl_arg arg = cur->arg;
-        rep(PL_HELP_CAT_INDENT, ' ');
-
-        printf("%s%s", PL_HELP_SEL_ANSI, arg.flag);
-        rep(l_flag - strlen(arg.flag), ' ');
-
-        if (l_short != 0) {
-          if (arg.short_flag != NULL) {
-            printf("%s%s",PL_HELP_SEP, arg.short_flag);
-            rep(l_short - strlen(arg.short_flag), ' ');
-          } else
-            rep(l_short + 2, ' ');
-        }
-
-        if (arg.takes_value)
-          printf("%s%s\033[0m value   ",PL_HELP_SEP, PL_HELP_SEP_ANSI);
-
-        else
-          printf("%s%s\033[0m no value",PL_HELP_SEP,PL_HELP_SEP_ANSI);
-
-        if (l_type != 0) {
-          if (arg.type != NULL) {
-            printf("%s%s\033[0m %s",PL_HELP_SEP, PL_HELP_SEP_ANSI, arg.type);
-            rep(l_type - strlen(arg.type), ' ');
-          } else
-            rep(l_type + 4, ' ');
-        }
-
-        printf("%s%s\033[0m %s\n",PL_HELP_SEP, PL_HELP_SEP_ANSI, arg.desc);
-      }
-      cur = cur->next;
-    }
-    printf("\n");
+    pl_help_print_cat(cats[i]);
+		printf("\n");
   }
 
   FREE(cats, cat_idx * sizeof(char *));
+}
+
+void pl_help_header(){
+	node * cur = &PL_ARGS;
+	printf("[--, -]");
+
+	while(cur->init == 1){
+		if(cur->arg.short_flag != NULL){
+			char * flag = cur->arg.flag + 2;
+			char * short_flag = cur->arg.short_flag+1;
+			printf("[%s, %s]",flag,short_flag);
+		}
+
+		cur = cur->next;
+	}
 }

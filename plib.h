@@ -34,6 +34,7 @@ typedef enum {
   PL_ARG_REQUIRES_VALUE = -6,
   PL_ARG_NO_REQUIRE_VALUE = -7,
   PL_MEM_ALLOC_ERROR = -8,
+	PL_ARG_REQUIRED = -9,
 } pl_r;
 
 
@@ -51,7 +52,9 @@ static const char *pl_s[9] = {
 	[_I(PL_ARG_REQUIRES_VALUE)] = "ARG_REQUIRES_VALUE",
 	[_I(PL_ARG_NO_REQUIRE_VALUE)] = "ARG_NO_REQUIRE_VALUE",
 	[_I(PL_MEM_ALLOC_ERROR)] = "MEM_ALLOC_ERROR",
+	[_I(PL_ARG_REQUIRED)] = "ARG_IS_REQUIRED",
 };
+
 #undef _I
 
 /** 
@@ -75,6 +78,7 @@ struct dma {
  * @param type type of argument (can be anything) 
  * @param short_flag shorthand version of flag eg -h
  * @param takes_value does the arg take a value eg -v='123' or -v
+ * @param  required throws an error if an argument with this flag was not run.
  **/
 typedef struct {
   char *flag;
@@ -87,6 +91,7 @@ typedef struct {
 
   // features
   int takes_value;
+	int required;
 
   // metadata cannot be changed
   int _short_run;
@@ -278,6 +283,8 @@ int get_next_node_i(void);
  **/ 
 int pl_proc(const int c, char *v[]);
 
+void pl_help_header(void);
+
 /**
  * @brief wrapper for pl_proc 
  *
@@ -371,6 +378,7 @@ char *pl_get_value(const pl_arg *arg, const int i);
 /**
  * @brief gets the last argument parsed by plib 
  **/
-#define PL_LAST_ARG (PL_ARG_LAST_INDEX >= 0) ? PL_ARGV[PL_ARG_LAST_INDEX] : NULL
+//#define PL_LAST_ARG (PL_ARG_LAST_INDEX >= 0) ? PL_ARGV[PL_ARG_LAST_INDEX] : NULL
+extern char * PL_LAST_ARG;
 
 #endif // PLIB 

@@ -49,7 +49,7 @@ int main(int argc, char *argv[]) {
   pl_arg *recursive =
       PL_A(.flag = "--recursive", .desc = "Enable recursive mode",
            .cat = "Operation", .type = "none", .short_flag = "-r",
-           .takes_value = 0);
+           .takes_value = 0, .required = 1);
   pl_arg *overwrite =
       PL_A(.flag = "--overwrite", .desc = "Overwrite existing files",
            .cat = "File", .type = "none", .short_flag = "-O", .takes_value = 0);
@@ -298,16 +298,16 @@ int main(int argc, char *argv[]) {
                        .type = "int", .short_flag = "-w", .takes_value = 1);
   pl_arg *height =
       PL_A(.flag = "--height", .desc = "Set height", .cat = "Config",
-           .type = "int", .short_flag = "-h", .takes_value = 1);
-  
-	pl_r ret = PL_PROC();
+           .type = "int", .short_flag = "-h", .takes_value = 1, .required = 1);
+
+  pl_r ret = PL_PROC();
 
   if (ret != PL_SUCCESS) {
-    printf("error: %s on arg %s (%d)\n", PL_E(ret), PL_LAST_ARG, ret);
-
     pl_help();
+    printf("error: %s on arg %s (%d)\n", PL_E(ret), PL_LAST_ARG, ret);
+    pl_help_header();
   }
 
-	pl_free();
+  pl_free();
   return 0;
 }
