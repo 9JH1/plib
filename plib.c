@@ -383,7 +383,7 @@ void pl_help_print_cat(const char *cat) {
   // print the category name
   printf("\033[1m%s%s:\033[0m\n", cat,PL_HELP_SEP_ANSI);
 
-  // loop through each node`
+  // loop through each node
   while (cur->init == 1) {
 
     // skip if the arg dosent have the current category
@@ -400,11 +400,11 @@ void pl_help_print_cat(const char *cat) {
     rep(PL_HELP_CAT_INDENT, ' ');
 
 		// print the argument name 
-    printf("%s%s", PL_HELP_SEL_ANSI, arg.flag);
+    printf("%s%s\033[0m", PL_HELP_SEL_ANSI, arg.flag);
 
 		// print required indicator
     if (arg.required)
-      printf("\033[31m*\033[0m");
+      printf("*\033[0m");
     else
       printf(" ");
 
@@ -416,22 +416,23 @@ void pl_help_print_cat(const char *cat) {
 
 			// if the current argumenbt has a shorthand 
       if (arg.short_flag != NULL) {
-        printf("%s%s%s", PL_HELP_SEP,PL_HELP_SEL_ANSI, arg.short_flag);
+        printf("%s%s%s\033[0m", PL_HELP_SEP,PL_HELP_SEL_ANSI, arg.short_flag);
 
         rep(l_short - strlen(arg.short_flag), ' ');
       } else
 				// if not then print some filler space 
-        rep(l_short + 2, ' ');
+        rep(l_short + 1, ' ');
     }
 
-		// print takes-value indicator 
-    if (arg.takes_value)
-      printf("%s%s\033[0m value of", PL_HELP_SEP, PL_HELP_SEP_ANSI);
-    else
-      printf("%s%s\033[0m no value", PL_HELP_SEP, PL_HELP_SEP_ANSI);
 
 		// if at least one argument has a type 
     if (l_type != 0) {
+			
+			// print takes-value indicator 
+    	if (arg.takes_value)
+      	printf("%s%s\033[0m value of", PL_HELP_SEP, PL_HELP_SEP_ANSI);
+    	else
+      	printf("%s%s\033[0m no value", PL_HELP_SEP, PL_HELP_SEP_ANSI);
 
 			// if the current arg has a type 
       if (arg.type != NULL) {
@@ -443,7 +444,7 @@ void pl_help_print_cat(const char *cat) {
     }
 
 		// print the description 
-    printf("%s%s\033[0m %s\n", PL_HELP_SEP, PL_HELP_SEP_ANSI, arg.desc);
+    printf("%s%s\033[0m%s\n", PL_HELP_SEP, PL_HELP_SEP_ANSI, arg.desc);
 		
 		// recurse to the next node
   	cur = cur->next;

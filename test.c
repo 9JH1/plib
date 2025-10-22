@@ -15,6 +15,7 @@ int main(int argc, char *argv[]){
 	pl_arg *required = PL_A(
 			"--required",
 			"basic required flag",
+			.short_flag = "-r",
 			.required = 1,
 			.cat = "Extra");
 
@@ -22,11 +23,7 @@ int main(int argc, char *argv[]){
 
 	// catch errors 
 	if(return_code != PL_SUCCESS){
-		printf("Error %s occured from argument %s (%d)\n",
-				PL_E(return_code), // stringify error code 
-				PL_LAST_ARG,       // get last argument parsed 
-				return_code);      // print error code number 
-		
+		PL_E_INFO(return_code)
 		printf("use --help for more information\n");
 		return 1;
 	}

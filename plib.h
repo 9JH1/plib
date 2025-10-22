@@ -90,7 +90,8 @@
  * @endcode 
  * this simple statement will call @ref pl_help and show the error code 
  * as a string along with the last argument parsed by plib (this would be 
- * the argument that caused the error).
+ * the argument that caused the error). If you want to do this with PLib 
+ * you can call @ref PL_E_INFO which will print out a similar statement.
  **/ 
 #ifndef PLIB
 #define PLIB 
@@ -121,7 +122,7 @@
 /** 
  * @brief help menu seperator string 
  **/
-#define PL_HELP_SEP " "
+#define PL_HELP_SEP "  "
 
 /**
  * @brief return codes of various functions 
@@ -483,4 +484,8 @@ char *pl_get_value(const pl_arg *arg, const int i);
 //#define PL_LAST_ARG (PL_ARG_LAST_INDEX >= 0) ? PL_ARGV[PL_ARG_LAST_INDEX] : NULL
 extern char * PL_LAST_ARG;
 
+/**
+ * @brief prints info about an error  using styled ansi 
+ **/
+#define PL_E_INFO(e) printf("Error %s%s\033[0m occured from argument %s%s %s(%d)\033[0m\n",PL_HELP_SEL_ANSI,PL_E(e),PL_HELP_SEL_ANSI,PL_LAST_ARG,PL_HELP_SEP_ANSI,e);
 #endif // PLIB 
