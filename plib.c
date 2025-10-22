@@ -97,8 +97,6 @@ int pl_arg_exist(node **buf, const char *name) {
         print("node found at index %d using shorthand\n", idx);
         return PL_SUCCESS;
       }
-
-      print("node was not at recurse level %d\n", idx);
     }
     *buf = (*buf)->next;
     idx++;
@@ -348,6 +346,7 @@ void rep(const int l, const char c) {
 }
 
 int in(const char *in, char **arr, const size_t size) {
+	print("searching for %s in array with size of %d\n",in,size);
   if (arr == NULL || in == NULL || size < 0)
     return 0;
   for (int i = 0; i < size; i++) {
@@ -382,7 +381,7 @@ void pl_help_print_cat(const char *cat) {
   cur = &PL_ARGS;
 
   // print the category name
-  printf("\033[1m%s\033[0m\n", cat);
+  printf("\033[1m%s%s:\033[0m\n", cat,PL_HELP_SEP_ANSI);
 
   // loop through each node`
   while (cur->init == 1) {
@@ -461,10 +460,17 @@ void pl_help() {
   // pre-run
   while (cur->init == 1) {
     pl_arg a = cur->arg;
-    if (!in(a.cat, cats, cat_idx)) {
+		
+		if(!in(a.cat,cats,cat_idx)){
+
       if (cat_idx == cat_cap) {
         cat_cap *= 2;
-        REALLOC(cats, cat_cap * sizeof(char *), (cat_cap / 2) * sizeof(char *));
+      	char **tmp = REALLOC(cats,cat_cap * sizeof(char *),(cat_cap/2) * sizeof(char *));
+				if(!tmp){
+					return; 
+				}
+
+				cats = tmp;
 
         if (!cats) {
           printf("error in mem alloc\n");
@@ -473,7 +479,7 @@ void pl_help() {
 
       cats[cat_idx] = a.cat;
       cat_idx++;
-    }
+		}
 
     cur = cur->next;
   }

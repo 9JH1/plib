@@ -1,8 +1,97 @@
 /** 
  * @file plib.h
  * @brief argument parsing library
+ * 
+ * PLib.h is an extensive argument parsing library written in C. 
+ * To use plib import it into your project and define an argument. 
+ * an argument can have many different properties that change how 
+ * the parsing engine interacts with them.
+ * 
+ * Heres a quickstart:
+ * @code 
+ * #include <stdio.h>
+ * #include "plib.h" 
+ * 
+ * int main(int argc, char *argv[]){
+ *   pl_arg *help = PL_A("--help");
+ *   
+ *   if(PL_PROC()){
+ *     // no errors occured while parsing  
+ *     
+ *     if(PL_R(help)){
+ *       printf("--help run!\n");
+ *     }
+ *   }
+ * 
+ *  return 0;
+ * }
+ * @endcode 
  *
- **/
+ * Running the above will produce an output of `--help run!` when then 
+ * program is run with the `--help` flag. Please read @ref pl_arg for 
+ * all of the possible options that can be added. 
+ *
+ * Plib keeps track of all arguments in a recursion-node table. This 
+ * form of data storage does not require reallocation which is why 
+ * this was perfered over an older use of a structure array. For 
+ * ever argument created there is a corrosponding node. A node is 
+ * just a structure that can have different properties applyed to it 
+ * for example a property in this case would be a pl_arg structure 
+ * containing the nodes argument data. Another property of a node is 
+ * the .next property this property is a space that can hold another  
+ * node, you can think of this as a directory inside a directoy. To 
+ * read all of the other possible node values read the @ref node
+ * struct.
+ * @code 
+ * node1 
+ * - pl_arg 
+ *   - ..arg values.. 
+ * - node2 
+ *   - pl_arg 
+ *     - ..arg values..
+ *   - node3 
+ *     - pl_arg 
+ *       - ..arg values.. 
+ *     - node4 
+ *       - pl_arg 
+ *         ..arg values..
+ * ... 
+ * @endcode
+ * To elaborate on why this method is used over a struct array is 
+ * due to how memory pointers in C work. Now in older versions of 
+ * PLib I used a struct array. the PL_A function would return a 
+ * pointer to the pl_arg inside an array of other pl_args. now the 
+ * issue with this is that at some point the pl_arg array has to be 
+ * reallocated due to its dynamic memory behavior made to hold more 
+ * arguments, this occures after the second argument call as that 
+ * is the default capacity. When this reallocation occures the old 
+ * memory pointer will be invalidated and will turn into a dangling 
+ * pointer.
+ *
+ * Plib is amoung many when it comes to basic argument parsing librarys.
+ * This library includes @ref pl_help which is a modern help menu that 
+ * displays all of the arguments defined in a dynamic catagorized table 
+ * form. PLib also includes a extensive debug mode when compiled with 
+ * `-DPL_VERBOSE`. Along with this error checking is simple as: 
+ * @code
+ * // get return code from parser 
+ * pl_r return_code = PL_PROC();
+ * 
+ * // catch error
+ * if(return_code != PL_SUCCESS){
+ *   printf("Error %s occured from argument %s (%d)\n",
+ *     PL_E(return_code), // stringify error code 
+ *     PL_LAST_ARG,       // get last argument parsed 
+ *     return_code);      // print error code number 
+ *
+ *	 pl_help();           // call help menu 	
+ *   return 1;
+ * }
+ * @endcode 
+ * this simple statement will call @ref pl_help and show the error code 
+ * as a string along with the last argument parsed by plib (this would be 
+ * the argument that caused the error).
+ **/ 
 #ifndef PLIB
 #define PLIB 
 
@@ -18,9 +107,22 @@
  **/
 #define PL_HELP_CAT_INDENT 2
 
+
+/** 
+* @brief sets the ansi color of the seperator in the help menu 
+**/ 
 #define PL_HELP_SEP_ANSI "\033[34m"
+
+/** 
+ * @brief sets the highlight color of the text in the help menu 
+ **/
 #define PL_HELP_SEL_ANSI "\033[32m"
+
+/** 
+ * @brief help menu seperator string 
+ **/
 #define PL_HELP_SEP " "
+
 /**
  * @brief return codes of various functions 
  * @see pl_s 
@@ -328,7 +430,7 @@ char *pl_get_value(const pl_arg *arg, const int i);
  * @see pl_get_value
  * @see pl_arg_value_count
  **/
-#define PL_G(arg) (arg._value.index > 0) ? pl_get_value(arg, arg->_value.index) : NULL
+#define PL_G(arg) pl_get_value(arg, arg->_value.index)
 
 /** 
  * @brief get the amount of values an arg has 
