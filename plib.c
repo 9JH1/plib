@@ -1,3 +1,8 @@
+// make dma helpers 
+// convert splitchar to an array 
+// add a function to add to this array 
+// use the array to compare splits from pl_proc
+
 #include "plib.h"
 #include <stdarg.h>
 #include <stdio.h>
@@ -13,8 +18,7 @@ void print_imp(const char *time, const char *file, const int line, const char *f
     vprintf(format, args);
     va_end(args);
   }
-}
-// clang-format on
+} // clang-format on
 
 // read plib.h docs
 int PL_MEM_USE = 1;
@@ -22,9 +26,17 @@ node PL_ARGS;
 int PL_ARG_LAST_INDEX = -1;
 int PL_ARGC;
 char **PL_ARGV;
-char PL_SPLITCHAR = '=';
+struct pl_dma_char PL_SPLITCHAR;
 char *PL_LAST_ARG;
 int PL_ARG_NOT_FOUND_ERROR = 1;
+
+// helper to create a pl_dma_char_s
+struct pl_dma_char_a dma_char_s(void){
+	const int base_cap = 2;
+	return (pl_dma_char_a){
+		.array = ()MALLOC(base_cap * char);
+	};
+}
 
 /**
  * @brief allocates string to PL_LAST_ARG
@@ -62,6 +74,9 @@ void *REALLOC(void *in, size_t new, size_t old);
  **/
 void FREE(void *in, size_t size);
 
+// -------------------
+// ACTUAL FUNCTIIONS
+// -------------------
 void *MALLOC(size_t in) {
   PL_MEM_USE += in;
   // print("pl memory changed to %d (+%d)\n", PL_MEM_USE, in);
@@ -211,6 +226,13 @@ pl_arg *pl_a(pl_arg in) {
   return &cur->arg;
 }
 
+// allocate new char to string array
+pl_r pl_split_append(const char c){
+	
+}
+
+
+
 pl_r alloc_last_arg(const char *arg) {
   if (arg == NULL)
     return PL_FAIL;
@@ -277,7 +299,7 @@ pl_r pl_proc(const int c, char *v[]) {
 
         // handle value dma
         if (arg_node->arg.takes_value == 1) {
-          struct dma *value = &arg_node->arg._value;
+          struct pl_dma_char_a *value = &arg_node->arg._value;
 
           // dma
           if (value->index == value->capacity) {

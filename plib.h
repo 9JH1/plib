@@ -182,15 +182,21 @@ static const char *pl_s[9] = {
  * @param capacity the amount of space allocated 
  * @param index the amount of items currently held
  **/ 
-struct dma {
+struct pl_dma_char_a {
   char **array;
   int capacity;
   int index;
 };
 
-
-
-
+/** 
+ * @brief same as @ref pl_dma_char_a but for a char array.
+ * @see pl_dma_char_a 
+ **/
+struct pl_dma_char {
+	char *array;
+	int capacity;
+	int index;
+};
 
 /**
  * @brief main struct for arguments 
@@ -218,7 +224,7 @@ typedef struct {
 
   // metadata cannot be changed
   int _short_run;
-  struct dma _value;
+ 	struct pl_dma_char_a _value;
 } pl_arg;
 
 
@@ -272,6 +278,17 @@ extern node PL_ARGS;
  **/ 
 extern char **PL_ARGV;
 
+/** 
+ * @brief the current amount of memory that plib is using
+ *
+ * useful for debug purposes plib has function wrappers 
+ * around all of the mem functioins (free, malloc, realloc)
+ * see @ref plib.c for some extra documentation of these functions. 
+ * @see plib.c
+ * @see MALLOC 
+ * @see FREE 
+ * @see REALLOC 
+ **/
 extern int PL_MEM_USE;
 
 /** 
@@ -327,7 +344,10 @@ extern int PL_MEM_USE;
  * sacrafice being able to throw errors for missing 
  * arguments.
  **/
-extern char PL_SPLITCHAR;
+extern struct pl_dma_char PL_SPLITCHAR;
+
+pl_r pl_split_append(const char c);
+
 /** 
  * @brief last index of PL_ARGV that was parsed by plib 
  *
