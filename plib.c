@@ -4,32 +4,75 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define print(a, ...)                                                          \
-  print_imp(__TIME__, __FILE__, __LINE__, __func__, a, __VA_ARGS__)
-void print_imp(const char *time, const char *file, const int line,
-               const char *func, const char *format, ...) {
-  if (PL_VERBOSE) {
-    va_list args;
+// clang-format off
+#define print(a, ...) print_imp(__TIME__, __FILE__, __LINE__, __func__, a, __VA_ARGS__)
+void print_imp(const char *time, const char *file, const int line, const char *func, const char *format, ...) {
+  if (PL_VERBOSE) {va_list args;
     va_start(args, format);
     printf("%s (%s@%d) %s: ", time, file, line, func);
     vprintf(format, args);
     va_end(args);
   }
 }
+// clang-format on
 
+// read plib.h docs
 int PL_MEM_USE = 1;
+node PL_ARGS;
+int PL_ARG_LAST_INDEX = -1;
+int PL_ARGC;
+char **PL_ARGV;
+char PL_SPLITCHAR = '=';
+char *PL_LAST_ARG;
+int PL_ARG_NOT_FOUND_ERROR = 1;
+
+/**
+ * @brief allocates string to PL_LAST_ARG
+ * plib keeps track of the last parsed arg by allocating
+ * memory for it in the PL_LAST_ARG value, this function
+ * will just take in a string and correctly allocate it
+ * to PL_LAST_ARG.
+ **/
+pl_r alloc_last_arg(const char *arg);
+
+/**
+ * @brief splits a string at a certain char
+ *
+ * This function is used to split arguments by
+ * a char. for example taking in the key and val pointer
+ * and parsing in a value like `--key=val` it would allocate
+ * key and val to hold the values split at whatever char `s`
+ * is, in the example if '=' was `s` then the returned values
+ * would be `--key` and `val`.
+ **/
+int split_arg(char **key, char **val, char *in, char s);
+
+/**
+ * @brief custom malloc to track mem use
+ **/
+void *MALLOC(size_t in);
+
+/**
+ * @brief custom realloc to track mem use
+ **/
+void *REALLOC(void *in, size_t new, size_t old);
+
+/**
+ * @brief custom free to track mem use
+ **/
+void FREE(void *in, size_t size);
 
 void *MALLOC(size_t in) {
   PL_MEM_USE += in;
-  //print("pl memory changed to %d (+%d)\n", PL_MEM_USE, in);
+  // print("pl memory changed to %d (+%d)\n", PL_MEM_USE, in);
   return malloc(in);
 }
 
 void *REALLOC(void *in, size_t new, size_t old) {
   PL_MEM_USE -= old;
-  //print("pl memory changed to %d (-%lu)\n", PL_MEM_USE, old);
+  // print("pl memory changed to %d (-%lu)\n", PL_MEM_USE, old);
   PL_MEM_USE += new;
-  //print("pl memory changed to %d (+%lu)\n", PL_MEM_USE, new);
+  // print("pl memory changed to %d (+%lu)\n", PL_MEM_USE, new);
   return realloc(in, new);
 }
 
@@ -37,7 +80,7 @@ void FREE(void *in, size_t size) {
   if (in == NULL)
     return;
   PL_MEM_USE -= size;
-  //print("pl memory changed to %d (-%lu)\n", PL_MEM_USE, sizeof(in));
+  // print("pl memory changed to %d (-%lu)\n", PL_MEM_USE, sizeof(in));
   free(in);
 }
 
@@ -61,47 +104,48 @@ int split_arg(char **key, char **val, char *in, char s) {
       (*key)[i] = in[i];
       part_key++;
       // assign value
-    } else {
+    } else
       (*val)[i - part_val - 1] = in[i];
-    }
   }
 
   // end strings and return
   (*key)[part_key] = '\0';
+
   if (part_val)
     (*val)[strlen(in) - part_val - 1] = '\0';
 
   return 0;
 }
 
-node PL_ARGS;
-int PL_ARG_LAST_INDEX = -1;
-int PL_ARGC;
-char **PL_ARGV;
-char PL_SPLITCHAR = '=';
-char *PL_LAST_ARG;
-int PL_ARG_NOT_FOUND_ERROR = 1;
-
 int pl_arg_exist(node **buf, const char *name) {
   *buf = &PL_ARGS;
   int idx;
-
+	
+	// loop through all nodes recursivly
   while ((*buf)->init == 1) {
+
+		// if the node has values 
     if (name != NULL && (*buf)->init == 1) {
+
+			// if the node has a match to the flag 
       if ((*buf)->arg.flag != NULL && strcmp((*buf)->arg.flag, name) == 0) {
         print("node found at index %d\n", idx);
         return PL_SUCCESS;
-      }
-      if ((*buf)->arg.short_flag != NULL &&
+
+			// or if the node has a match to the short_flag
+      } else if ((*buf)->arg.short_flag != NULL &&
           strcmp((*buf)->arg.short_flag, name) == 0) {
         print("node found at index %d using shorthand\n", idx);
         return PL_SUCCESS;
       }
     }
+
+		// move to the next node
     *buf = (*buf)->next;
     idx++;
   }
-
+	
+	// searched through all nodes
   return PL_FAIL;
 }
 
@@ -132,20 +176,21 @@ int get_next_node_i(void) {
 pl_arg *pl_a(pl_arg in) {
   node *cur;
 
-	if(in.short_flag != NULL){
-		if(pl_arg_exist(&cur,in.short_flag) == PL_SUCCESS){
-			print("argument with this shorthand '%s' already defined.. skipping\n",
-					in.short_flag);
-			return (pl_arg *){0};
-		}
-	}
+  if (in.short_flag != NULL) {
+    if (pl_arg_exist(&cur, in.short_flag) == PL_SUCCESS) {
+      print("argument with this shorthand '%s' already defined.. skipping\n",
+            in.short_flag);
+      return (pl_arg *){0};
+    }
+  }
 
-	if(pl_arg_exist(&cur,in.flag) == PL_SUCCESS){
-		printf("argument with this flag '%s' already defined.. skipping\n",in.flag);
-		return (pl_arg *){0};
-	}
+  if (pl_arg_exist(&cur, in.flag) == PL_SUCCESS) {
+    printf("argument with this flag '%s' already defined.. skipping\n",
+           in.flag);
+    return (pl_arg *){0};
+  }
 
-	cur = get_next_node();
+  cur = get_next_node();
 
   cur->init = 1;
   cur->arg = in;
@@ -171,8 +216,8 @@ pl_r alloc_last_arg(const char *arg) {
     return PL_FAIL;
 
   size_t arg_size = strlen(arg);
-
   size_t old_size = strlen(PL_LAST_ARG) * sizeof(char);
+
   PL_LAST_ARG = NULL;
   char *tmp = REALLOC(PL_LAST_ARG, arg_size * sizeof(char), old_size);
   if (!tmp) {
@@ -260,9 +305,10 @@ pl_r pl_proc(const int c, char *v[]) {
 
     FREE(key, strlen(key));
 
-		if(val != NULL)
-    	FREE(val, strlen(val));
-		else FREE(val,0);
+    if (val != NULL)
+      FREE(val, strlen(val));
+    else
+      FREE(val, 0);
     if (return_code != PL_SUCCESS)
 
       break;
@@ -303,12 +349,12 @@ void pl_free() {
         }
       }
 
-			print("free'd %lu bytes of mem for value array\n",
+      print("free'd %lu bytes of mem for value array\n",
             cur->arg._value.capacity * sizeof(char *));
-      
-			FREE(cur->arg._value.array, cur->arg._value.capacity * sizeof(char *));
-      
-			cur->arg._value.array = NULL;
+
+      FREE(cur->arg._value.array, cur->arg._value.capacity * sizeof(char *));
+
+      cur->arg._value.array = NULL;
     }
     if (cur != &PL_ARGS) {
       print("free'd %lu bytes of mem for node\n", sizeof(node));
@@ -318,13 +364,13 @@ void pl_free() {
     rec_lev++;
   }
 
-	size_t last_arg_size = 0;
+  size_t last_arg_size = 0;
 
-	if(PL_LAST_ARG != NULL){
-		last_arg_size = strlen(PL_LAST_ARG) * sizeof(char);
-	}
+  if (PL_LAST_ARG != NULL) {
+    last_arg_size = strlen(PL_LAST_ARG) * sizeof(char);
+  }
 
-  FREE(PL_LAST_ARG,last_arg_size);
+  FREE(PL_LAST_ARG, last_arg_size);
 
   print("exiting plib with %d bytes of memory held\n", PL_MEM_USE);
 }
@@ -341,14 +387,18 @@ char *pl_get_value(const pl_arg *arg, const int i) {
 }
 
 void rep(const int l, const char c) {
+  if (l == 0)
+    return;
   for (int i = 0; i < l; i++)
     putchar(c);
 }
 
 int in(const char *in, char **arr, const size_t size) {
-	print("searching for %s in array with size of %d\n",in,size);
+  print("searching for %s in array with size of %d\n", in, size);
+
   if (arr == NULL || in == NULL || size < 0)
     return 0;
+
   for (int i = 0; i < size; i++) {
     if (strcmp(in, arr[i]) == 0)
       return 1;
@@ -357,9 +407,11 @@ int in(const char *in, char **arr, const size_t size) {
   return 0;
 }
 
+// kitty mreeop :3
 void pl_help_print_cat(const char *cat) {
   node *cur = &PL_ARGS;
   size_t l_flag = 0, l_type = 0, l_short = 0;
+  const int padding = strlen(PL_HELP_SEP);
 
   // loop through and get longest values
   while (cur->init == 1) {
@@ -377,11 +429,26 @@ void pl_help_print_cat(const char *cat) {
     cur = cur->next;
   }
 
+  // print the hint column
+  if (PL_HELP_HINT_COL) {
+    printf("%sarg,", PL_HELP_SEP_ANSI);
+    if (l_short != 0)
+      printf("short arg,");
+
+    printf("value,");
+
+    if (l_type != 0)
+      printf("takes value of type,");
+    printf("description\033[0m");
+
+    putchar('\n');
+  }
+
   // reset the cur object
   cur = &PL_ARGS;
 
   // print the category name
-  printf("\033[1m%s%s:\033[0m\n", cat,PL_HELP_SEP_ANSI);
+  printf("\033[1m%s%s:\033[0m\n", cat, PL_HELP_SEP_ANSI);
 
   // loop through each node
   while (cur->init == 1) {
@@ -389,65 +456,67 @@ void pl_help_print_cat(const char *cat) {
     // skip if the arg dosent have the current category
     if (strcmp(cur->arg.cat, cat) != 0) {
 
-			// recurse to the next node
-  		cur = cur->next;
+      // recurse to the next node
+      cur = cur->next;
       continue;
     }
-		
+
     pl_arg arg = cur->arg;
 
-		// indent the argument
+    // indent the argument
     rep(PL_HELP_CAT_INDENT, ' ');
 
-		// print the argument name 
+    // print the argument name
     printf("%s%s\033[0m", PL_HELP_SEL_ANSI, arg.flag);
 
-		// print required indicator
+    // print required indicator
     if (arg.required)
       printf("*\033[0m");
     else
       printf(" ");
 
-
     rep(l_flag - strlen(arg.flag), ' ');
 
-		// if at least one argument has a shorthand 
+    // if at least one argument has a shorthand
     if (l_short != 0) {
 
-			// if the current argumenbt has a shorthand 
+      // if the current argument has a shorthand
       if (arg.short_flag != NULL) {
-        printf("%s%s%s\033[0m", PL_HELP_SEP,PL_HELP_SEL_ANSI, arg.short_flag);
-
+        printf("%s%s%s%s\033[0m", PL_HELP_SEP_ANSI, PL_HELP_SEP,
+               PL_HELP_SEL_ANSI, arg.short_flag);
         rep(l_short - strlen(arg.short_flag), ' ');
-      } else
-				// if not then print some filler space 
-        rep(l_short + 1, ' ');
+      } else {
+        // if not then print some filler space
+        printf("%s%s", PL_HELP_SEP_ANSI, PL_HELP_SEP);
+        rep(l_short, ' ');
+      }
     }
 
-
-		// if at least one argument has a type 
+    // if at least one argument has a type
     if (l_type != 0) {
-			
-			// print takes-value indicator 
-    	if (arg.takes_value)
-      	printf("%s%s\033[0m value of", PL_HELP_SEP, PL_HELP_SEP_ANSI);
-    	else
-      	printf("%s%s\033[0m no value", PL_HELP_SEP, PL_HELP_SEP_ANSI);
 
-			// if the current arg has a type 
+      // print takes-value indicator
+      if (arg.takes_value)
+        printf("%s%s\033[0m value of", PL_HELP_SEP_ANSI, PL_HELP_SEP);
+      else
+        printf("%s%s\033[0m no value", PL_HELP_SEP_ANSI, PL_HELP_SEP);
+
+      // if the current arg has a type
       if (arg.type != NULL) {
-        printf("%s%s%s%s", PL_HELP_SEP, PL_HELP_SEP_ANSI,PL_HELP_SEL_ANSI,arg.type);
+        printf("%s%s%s%s", PL_HELP_SEP_ANSI, PL_HELP_SEP, PL_HELP_SEL_ANSI,
+               arg.type);
         rep(l_type - strlen(arg.type), ' ');
       } else
-				// or if not print some space 
-        rep(l_type + 4, ' ');
+        // or if not print some space
+        printf("%s", PL_HELP_SEP);
+      rep(l_type, ' ');
     }
 
-		// print the description 
-    printf("%s%s\033[0m%s\n", PL_HELP_SEP, PL_HELP_SEP_ANSI, arg.desc);
-		
-		// recurse to the next node
-  	cur = cur->next;
+    // print the description
+    printf("%s%s\033[0m%s\n", PL_HELP_SEP_ANSI, PL_HELP_SEP, arg.desc);
+
+    // recurse to the next node
+    cur = cur->next;
   }
 }
 
@@ -461,17 +530,18 @@ void pl_help() {
   // pre-run
   while (cur->init == 1) {
     pl_arg a = cur->arg;
-		
-		if(!in(a.cat,cats,cat_idx)){
+
+    if (!in(a.cat, cats, cat_idx)) {
 
       if (cat_idx == cat_cap) {
         cat_cap *= 2;
-      	char **tmp = REALLOC(cats,cat_cap * sizeof(char *),(cat_cap/2) * sizeof(char *));
-				if(!tmp){
-					return; 
-				}
+        char **tmp = REALLOC(cats, cat_cap * sizeof(char *),
+                             (cat_cap / 2) * sizeof(char *));
+        if (!tmp) {
+          return;
+        }
 
-				cats = tmp;
+        cats = tmp;
 
         if (!cats) {
           printf("error in mem alloc\n");
@@ -480,30 +550,15 @@ void pl_help() {
 
       cats[cat_idx] = a.cat;
       cat_idx++;
-		}
+    }
 
     cur = cur->next;
   }
 
   for (int i = 0; i < cat_idx; i++) {
     pl_help_print_cat(cats[i]);
-		printf("\n");
+    printf("\n");
   }
 
   FREE(cats, cat_idx * sizeof(char *));
-}
-
-void pl_help_header(){
-	node * cur = &PL_ARGS;
-	printf("[--, -]");
-
-	while(cur->init == 1){
-		if(cur->arg.short_flag != NULL){
-			char * flag = cur->arg.flag + 2;
-			char * short_flag = cur->arg.short_flag+1;
-			printf("[%s, %s]",flag,short_flag);
-		}
-
-		cur = cur->next;
-	}
 }

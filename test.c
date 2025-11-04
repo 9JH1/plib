@@ -18,7 +18,8 @@ int main(int argc, char *argv[]){
 			.short_flag = "-r",
 			.required = 1,
 			.cat = "Extra");
-
+	
+	// process arguments (auto gets argv argc)
 	pl_r return_code = PL_PROC();
 
 	// catch errors 

@@ -39,7 +39,7 @@
  * for example a property in this case would be a pl_arg structure 
  * containing the nodes argument data. Another property of a node is 
  * the .next property this property is a space that can hold another  
- * node, you can think of this as a directory inside a directoy. To 
+ * node, you can think of this as a directory inside a directory. To 
  * read all of the other possible node values read the @ref node
  * struct.
  * @code 
@@ -54,9 +54,11 @@
  *       - ..arg values.. 
  *     - node4 
  *       - pl_arg 
- *         ..arg values..
+ *         - ..arg values..
  * ... 
  * @endcode
+ * Note that node1 would be the same as PL_ARGS.
+ * 
  * To elaborate on why this method is used over a struct array is 
  * due to how memory pointers in C work. Now in older versions of 
  * PLib I used a struct array. the PL_A function would return a 
@@ -112,17 +114,25 @@
 /** 
 * @brief sets the ansi color of the seperator in the help menu 
 **/ 
-#define PL_HELP_SEP_ANSI "\033[34m"
+#define PL_HELP_SEP_ANSI "\033[38m"
 
 /** 
  * @brief sets the highlight color of the text in the help menu 
  **/
-#define PL_HELP_SEL_ANSI "\033[32m"
+#define PL_HELP_SEL_ANSI "\033[31m"
 
 /** 
  * @brief help menu seperator string 
  **/
-#define PL_HELP_SEP "  "
+#define PL_HELP_SEP " | "
+
+/** 
+ * @brief print the format specifier at the top of help menu calls 
+ * 
+ * set to zero to disable 
+ **/ 
+#define PL_HELP_HINT_COL 0
+
 
 /**
  * @brief return codes of various functions 
@@ -140,7 +150,14 @@ typedef enum {
 	PL_ARG_REQUIRED = -9,
 } pl_r;
 
-
+/** 
+ * @brief takes a negative below zero number and converts it to an array friendly number
+ * 
+ * used for translating the negative return codes from pl_r into valid array indexes for 
+ * pl_s.
+ *
+ * note that this macro is un-defined later
+ **/
 #define _I(n) ((n+1)*-1)
 
 /** 
@@ -158,7 +175,6 @@ static const char *pl_s[9] = {
 	[_I(PL_ARG_REQUIRED)] = "ARG_IS_REQUIRED",
 };
 
-#undef _I
 
 /** 
  * @brief dma struct used in _value of pl_arg 
@@ -171,6 +187,10 @@ struct dma {
   int capacity;
   int index;
 };
+
+
+
+
 
 /**
  * @brief main struct for arguments 
@@ -200,6 +220,7 @@ typedef struct {
   int _short_run;
   struct dma _value;
 } pl_arg;
+
 
 /**
  * @brief node structure 
@@ -252,6 +273,7 @@ extern node PL_ARGS;
 extern char **PL_ARGV;
 
 extern int PL_MEM_USE;
+
 /** 
  * @brief what character to split arguments at 
  * 
@@ -259,13 +281,14 @@ extern int PL_MEM_USE;
  * if you wanted to use it normally it splits 
  * at the '=' char meaning --test=123 is interpreted 
  * as key: --test, val: 123, if you wanted to have cool 
- * arguments like gccs -WMY_VALUE_HERE or -DMY_VALUE_HERE 
+ * arguments like gcc's -WMY_VALUE_HERE or -DMY_VALUE_HERE 
  * you can set up an argument with a flag name of '-' and 
  * change the splitchar to 'D' or 'W' you can parse 
  * -DMY_VALUE into key: -, val: MY_VALUE. you can dual parse 
  * both regular and alternative splutchars in unison like so: 
  * 
  * @code 
+ * // ...
  * pl_arg *test1 = PL_A(.flag = "--test", "basic test arg",.takes_value=1);
  * // disable parser quit on arg not found
  * PL_ARG_NOT_FOUND_ERROR = 0; 
@@ -282,9 +305,27 @@ extern int PL_MEM_USE;
  * if (PL_R(test2))
  *   for (int i = 0; i < test2->_value.index; i++)
  *     printf("value: %s\n", pl_get_value(test2, i));
+ * // ...
  * @endcode
  *
- * with the above code running 
+ * the above code will run the parser twice. Once to 
+ * look for arguments that use the default '=' split 
+ * and another to look for arguments with the splitchar 
+ * of 'D' in order for this to work you have to disable 
+ * the ARG_NOT_FOUND_ERROR because if you tryed parsing 
+ * `-DMY_FLAG --test=123` it would fail as on the first 
+ * run the parser would try to split -DMY_FLAG by an '=' 
+ * when it dosent find it it will search for if the arg 
+ * exists in the arg list in general and it most likely 
+ * will not which will cause the parser to return a code 
+ * of `PL_ARG_NOT_FOUND`. this can be disabled by setting 
+ * the `PL_ARG_NOT_FOUND_ERROR` to 0 like shown in the 
+ * above code. With `PL_ARG_NOT_FOUND_ERROR1 equal to 0 
+ * the code passes through both loops regardless of if 
+ * an argument is missing. So in short you can do dual 
+ * parsing utilizing the PL_SPLITCHAR value but you will 
+ * sacrafice being able to throw errors for missing 
+ * arguments.
  **/
 extern char PL_SPLITCHAR;
 /** 
@@ -382,11 +423,12 @@ int get_next_node_i(void);
  * at the first @ref PL_SPLITCHAR char, then 
  * they are run through @ref pl_arg_exist to 
  * see if the argument exists or not. 
+ *
+ * @param c Count of arguments in v 
+ * @param v array of strings
  * @see PL_PROC
  **/ 
 int pl_proc(const int c, char *v[]);
-
-void pl_help_header(void);
 
 /**
  * @brief wrapper for pl_proc 
@@ -400,8 +442,11 @@ void pl_help_header(void);
  * @brief check if argument exists by its flag name 
  *
  * @param flag flag string to search for 
- * @param buf buffer that returns the node 
- *        the argument was found in 
+ * @param buf buffer that is equal to the last node 
+ * 				parsed. when this function returns buf will 
+ * 				be the argument in which the arg was found. 
+ * 				be sure to check that the return code is 
+ * 				PL_SUCCESS before accessing the buf value.
  **/
 pl_r pl_arg_exist(node **buf, const char *flag);
 
@@ -420,6 +465,9 @@ pl_r pl_arg_exist(node **buf, const char *flag);
  * use @ref pl_arg_value_count to get the total amount 
  * of arguments availble
  *
+ * @param arg @ref pl_arg to get the value of
+ * @param i index of value. (read above)
+ *
  * @see pl_arg_value_count 
  * @see PL_G 
  **/
@@ -428,6 +476,7 @@ char *pl_get_value(const pl_arg *arg, const int i);
 /** 
  * @brief gets the first value run on an arg 
  * @returns first value run with argument 
+ * @param arg pl_arg to get value of
  * @see pl_get_value
  * @see pl_arg_value_count
  **/
@@ -476,7 +525,7 @@ char *pl_get_value(const pl_arg *arg, const int i);
  * @see pl_s 
  * @see pl_r 
  **/ 
-#define PL_E(ret) pl_s[(ret+1)*-1]
+#define PL_E(ret) pl_s[_I(ret)]
 
 /**
  * @brief gets the last argument parsed by plib 

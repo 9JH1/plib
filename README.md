@@ -133,8 +133,8 @@ argument that caused the issue.
 ## Full Documentation
 This project uses the doxygen documentation system, in order to view the documentation you must install the `doxygen` program to your system. PLib does not come with its own DoxyFile so you need to create one, this can be done like so:
 ```
-doxygen -g plib 
-doxygen plib
+doxygen -g .plibDoxy
+doxygen .plibDoxy
 ```
 
 To view the newly generated documentation cd into the `./html` folder and open the `index.html` file in a browser of your choice.
