@@ -182,21 +182,15 @@ static const char *pl_s[9] = {
  * @param capacity the amount of space allocated 
  * @param index the amount of items currently held
  **/ 
-struct pl_dma_char_a {
+struct dma {
   char **array;
   int capacity;
   int index;
 };
 
-/** 
- * @brief same as @ref pl_dma_char_a but for a char array.
- * @see pl_dma_char_a 
- **/
-struct pl_dma_char {
-	char *array;
-	int capacity;
-	int index;
-};
+
+
+
 
 /**
  * @brief main struct for arguments 
@@ -224,7 +218,7 @@ typedef struct {
 
   // metadata cannot be changed
   int _short_run;
- 	struct pl_dma_char_a _value;
+  struct dma _value;
 } pl_arg;
 
 
@@ -278,17 +272,6 @@ extern node PL_ARGS;
  **/ 
 extern char **PL_ARGV;
 
-/** 
- * @brief the current amount of memory that plib is using
- *
- * useful for debug purposes plib has function wrappers 
- * around all of the mem functioins (free, malloc, realloc)
- * see @ref plib.c for some extra documentation of these functions. 
- * @see plib.c
- * @see MALLOC 
- * @see FREE 
- * @see REALLOC 
- **/
 extern int PL_MEM_USE;
 
 /** 
@@ -344,10 +327,7 @@ extern int PL_MEM_USE;
  * sacrafice being able to throw errors for missing 
  * arguments.
  **/
-extern struct pl_dma_char PL_SPLITCHAR;
-
-pl_r pl_split_append(const char c);
-
+extern char PL_SPLITCHAR;
 /** 
  * @brief last index of PL_ARGV that was parsed by plib 
  *
@@ -500,7 +480,7 @@ char *pl_get_value(const pl_arg *arg, const int i);
  * @see pl_get_value
  * @see pl_arg_value_count
  **/
-#define PL_G(arg) pl_get_value(arg, arg->_value.index)
+#define PL_G(arg) pl_get_value(arg, arg->_value.index -1)
 
 /** 
  * @brief get the amount of values an arg has 
