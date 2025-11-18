@@ -170,6 +170,8 @@ int input(InputEvent *local) {
   return ERROR;
 }
 
+// if p return o 
+// if not p return c
 #define take_pr_ch(p, c, o) ((p) ? (o) : (c))
 
 char *take(const char *prompt, const char cover) {
