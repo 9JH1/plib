@@ -1,16 +1,13 @@
 #include <stdio.h>
-#include <string.h>
 #include <termios.h>
 #include <unistd.h>
 
 struct termios orig_term;
-
 typedef enum { MOVE, CLICK, RELEASE, SCROLL, SPECIAL, ERR, KEY} _in_ret;
+typedef void (*func)();
 
 void disable_raw_mode();
 void enable_raw_mode();
-
-typedef void (*func)();
 
 #define in_loop()                                                              \
   char buf[64]; /* string key buffer */                                        \
@@ -37,13 +34,15 @@ typedef struct {
   };
 } input;
 
+#define in_catch(l) _in_catch(buf,n,l);
 void _in_catch(char *buf, int len, input * l) {
   if (len <= 0) {
     printf("error\n");
 		l->type = ERR;
     return;
   }
-
+	
+	// handle mouse
   if (len >= 6 && buf[0] == '\033' && buf[1] == '[' && buf[2] == '<') {
     if (sscanf(buf, "\033[<%d;%d;%d%c", &l->mouse.btn, &l->mouse.x, &l->mouse.y, &l->mouse.et) != 4) {
       printf("error\n");
@@ -58,12 +57,13 @@ void _in_catch(char *buf, int len, input * l) {
       l->type = SCROLL;
     }
 
-    // handle control+_ keys
+  // handle control+_ keys
   } else if (len == 1 && buf[0] <= 26) {
     l->special.key[0] = buf[0] + 'A' - 1;
   	l->special.key[1] = '\0';
 		l->type = SPECIAL;
-
+ 
+	// handle regular keys 
   } else if (len == 1) {
 		l->buf[0] = buf[0];
 		l->len = len;
@@ -74,13 +74,17 @@ void _in_catch(char *buf, int len, input * l) {
 	l->type = ERR;
 }
 
+// in_ui_key(key,func);
+// in_ui_hover_box(func, x1,y1,x2,y2);
+// in_ui_click_box(func, x1,y1,x2,y2)
+
 
 int main() {
   enable_raw_mode();
 	input globby;
 
   in_loop() {
-		_in_catch(buf, n, &globby);
+		in_catch(&globby);
 	}
 
   disable_raw_mode();
