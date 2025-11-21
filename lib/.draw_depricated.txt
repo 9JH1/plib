@@ -1,13 +1,17 @@
-#include "draw.h"
+/*
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
 
-// draw a solid box on screen
+#define reset "\033[0m"
+
+
+// Draw a solid box on screen
 int solid(solid_opt *opt) {
-  const int max_len = opt->width + ANSI_BYTE_SIZE;
-  const int max_out =
-      max_len * opt->height + (8 * ANSI_BYTE_SIZE) + ANSI_BYTE_SIZE;
+  const int max_len = opt->width + strlen(opt->ansi) + strlen(opt->ansi);
+  const int max_out = max_len * opt->height;
   char *box = malloc(max_out);
+
   if (!box) {
     printf("Failed to allocate %d bytes of memory for solid\n", max_out);
     return 1;
@@ -21,7 +25,7 @@ int solid(solid_opt *opt) {
     char line[max_len];
     int pos = 0;
     int cur = opt->y + h;
-    pos += snprintf(line + pos, max_len - pos, "\033[%d;%dH", cur, opt->x);
+    pos += snprintf(line + pos, max_len - pos, "%s\033[%d;%dH", opt->ansi, cur, opt->x);
     for (int w = 0; w < opt->width; w++) {
       if (pos < max_len - 1) {
         line[pos++] = opt->fill;
@@ -35,15 +39,6 @@ int solid(solid_opt *opt) {
   return 0;
 }
 
-int slen(const char *str) {
-  size_t length = 0;
-  while (*str != '\0') {
-    length++;
-    str++;
-  }
-  return length;
-}
-
 int border(const solid_opt box_opt, border_opt *opt) {
   const int max_len = box_opt.width * (ANSI_BYTE_SIZE * 2);
   const int y = box_opt.y;
@@ -51,13 +46,13 @@ int border(const solid_opt box_opt, border_opt *opt) {
   const int h = box_opt.height;
   const int w = box_opt.width;
   const int max_out = h * (ANSI_BYTE_SIZE * 2);
-  const char *ansi = (opt->ansi && slen(opt->ansi) > 0)
+  const char *ansi = (opt->ansi && strlen(opt->ansi) > 0)
                          ? opt->ansi
                          : (box_opt.ansi ? box_opt.ansi : "");
 
   char *box = malloc(max_out);
   if (!box) {
-    printf("Failed to allocate %d bytes of memory for border\n", max_out);
+:wqa    printf("Failed to allocate %d bytes of memory for border\n", max_out);
     return 1;
   }
 
@@ -93,8 +88,8 @@ int border(const solid_opt box_opt, border_opt *opt) {
 int title(const solid_opt box, title_opt *opt) {
   const title_opt_position pos = opt->pos;
   const int title_len =
-      slen(opt->title) + slen(opt->suffix) + slen(opt->prefix);
-  const char *ansi = (opt->ansi && slen(opt->ansi) > 0)
+      strlen(opt->title) + strlen(opt->suffix) + strlen(opt->prefix);
+  const char *ansi = (opt->ansi && strlen(opt->ansi) > 0)
                          ? opt->ansi
                          : (box.ansi ? box.ansi : "");
   int y = box.y, x = box.x;
@@ -113,8 +108,8 @@ int title(const solid_opt box, title_opt *opt) {
     x -= opt->padding + 1;
   }
 
-  int max_size = 2 * ANSI_BYTE_SIZE + slen(opt->prefix) + slen(opt->title) +
-                 slen(opt->suffix);
+  int max_size = 2 * ANSI_BYTE_SIZE + strlen(opt->prefix) + strlen(opt->title) +
+                 strlen(opt->suffix);
   char *out = malloc(max_size);
   if (!out) {
     printf("failed to allocate %d bytes for title\n", max_size);
@@ -145,8 +140,8 @@ void box(box_opt *opt) {
   if (ret)
     return;
 
-  int max_size = slen(opt->solid.string) + slen(opt->border.string) +
-                 slen(opt->title.string) + ANSI_BYTE_SIZE;
+  int max_size = strlen(opt->solid.string) + strlen(opt->border.string) +
+                 strlen(opt->title.string) + ANSI_BYTE_SIZE;
   char *out = malloc(max_size);
   out[0] = '\0';
 
@@ -164,9 +159,9 @@ void free_box_opt(box_opt *opt) {
 }
 
 int sprite(const char *array[], sprite_opt *opt) {
-  int max_size = (opt->ansi ? slen(opt->ansi) : 0) + 1;
+  int max_size = (opt->ansi ? strlen(opt->ansi) : 0) + 1;
   for (int i = 0; i < opt->meta_height; i++)
-    max_size += (array[i] ? slen(array[i]) : 0) + ANSI_BYTE_SIZE + 1;
+    max_size += (array[i] ? strlen(array[i]) : 0) + ANSI_BYTE_SIZE + 1;
 
   char *out = malloc(max_size);
   if (!out) {
@@ -177,7 +172,7 @@ int sprite(const char *array[], sprite_opt *opt) {
   out[0] = '\0';
   int pos = snprintf(out, max_size, "%s", opt->ansi ? opt->ansi : "");
   for (int i = 0; i < opt->meta_height; i++) {
-    if (array[i] && slen(array[i]) > 0) {
+    if (array[i] && strlen(array[i]) > 0) {
       int written = snprintf(out + pos, max_size - pos, "\033[%d;%dH%s",
                              opt->y + i, opt->x, array[i]);
       if (written >= max_size - pos) {
@@ -191,3 +186,35 @@ int sprite(const char *array[], sprite_opt *opt) {
   opt->string = out;
   return 0;
 }
+
+int main(){
+	solid_opt one = {
+		.width = 10,
+		.height = 10,
+		.x = 1,
+		.y = 1,
+	};
+
+	solid_opt two = {
+		.width = 10,
+		.height = 10,
+		.x = 11,
+		.y = 0,
+	};
+
+	solid_opt three = {
+		.width = 10,
+		.height = 10,
+		.x = 1,
+		.y = 11,
+	};
+
+	solid(&one);
+	solid(&two);
+	solid(&three);
+
+	printf("%s%s%s",one.string,two.string,three.string);
+	while(1){};
+	return 1;
+}
+*/
