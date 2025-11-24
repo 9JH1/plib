@@ -1,157 +1,183 @@
-/ advanced-box-renderer
+// advanced-box-renderer
 
 #include <stdarg.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 
 //-----------------------------------------------
 // HEADER FILE
 // ----------------------------------------------
 
-// function type
-typedef void (*func)();
-
-// basic Vector 2
+// Basic Vector 2
 struct vec2 {
   int x, y;
 };
+
+// Border options
+typedef struct border {
+  char *top;
+  char *bottom;
+  char *right;
+  char *left;
+  char *top_left;
+  char *top_right;
+  char *bottom_left;
+  char *bottom_right;
+  char *ansi;
+} border;
 
 // Box options
 typedef struct box {
   struct vec2 size;
   struct vec2 pos;
   char *ansi;
-  char fill; // fill char
-
-  char *_r; // Rendered
-  int _d;   // Disable
+  char fill;     // fill char
+  border border; // border
+  char *_r;      // Rendered
 } box;
-
-// Function Declarations
-char *_box_render(box *);
-box _init_box(box);
 
 // Macro Definitions
 #define vec(x, y)                                                              \
   (struct vec2) { x, y }
 
-#define UI_BOX(...) _init_box((box){__VA_ARGS__})
-#define UI_BOX_DRAW(o) printf("%s", o._r);
-#define _UI_RESET_CODE "\033[0m"
-//-----------------------------------------------
+char *is_border(box *o, int row, int col) {
+  if (row == 0 && col == 0)
+    return o->border.top_left;
+  if (row == 0 && col == o->size.x - 1)
+    return o->border.top_right;
+  if (row == o->size.y - 1 && col == 0)
+    return o->border.bottom_left;
+  if (row == o->size.y - 1 && col == o->size.x - 1)
+    return o->border.bottom_right;
+  if (row == 0)
+    return o->border.top;
+  if (row == o->size.y - 1)
+    return o->border.bottom;
+  if (col == 0)
+    return o->border.left;
+  if (col == o->size.x - 1)
+    return o->border.right;
 
-int digits(int n) {
-  if (n == 0) {
-    return 1;
-  }
-
-  int count = 0;
-  if (n < 0) {
-    n = -n;
-  }
-  while (n > 0) {
-    n /= 10;
-    count++;
-  }
-  return count;
+  return NULL;
 }
 
-// render box
-char *_box_render(box *o) { // clang-format off
-	const size_t block_start = strlen(o->ansi);
-	const size_t block_end   = strlen(_UI_RESET_CODE);
 
-  const size_t line_max    =
-		+ strlen("\033[;H")
-		+ snprintf(NULL, 0,"\033[%d;%dH",
-			+ digits(o->size.x + o->pos.x),
-			+ digits(o->size.y + o->pos.y))
-		+ o->size.x;
-	//  ^ Size of the fill char
-	
-	const size_t out_max = 
-		+ block_start 
-		+ line_max * o->size.y 
-		+ block_end 
-		+ 1;
-	//  ^ String terminator
+size_t get_border_size(box *o) {
+  size_t bytes = 0;
+  for (int y = 0; y < o->size.y; ++y) {
+    for (int x = 0; x < o->size.x; ++x) {
+      char *b = is_border(o, y, x);
+      if (b)
+        bytes += strlen(b);
+    }
+  }
+  return bytes;
+}
 
-	int out_i = 0;
-	char *out_s = malloc(out_max);
-	if(!out_s) return NULL;	
-	
-	// copy ANSI bytes
-	out_i += snprintf(out_s + out_i, out_max - out_i, "%s", o->ansi);
+size_t get_pos_size(box *o) {
+  size_t bytes = 0;
+  for (int h = 0; h < o->size.y; ++h) {
+    bytes += snprintf(NULL, 0, "\033[%d;%dH", o->pos.y + h + 1, o->pos.x + 1);
+  }
+  return bytes;
+}
 
-	// Compute box data
-	for(int h = 0; h < o->size.y; ++h){
-		int line_i = 0;
-		char line_s[line_max];
+size_t get_ansi_size(box *o){
+    const size_t border_ansi = snprintf(NULL, 0, "%s",o->border.ansi);
+    const size_t ansi = snprintf(NULL, 0, "%s", o->ansi);
+    const int fill_height = o->size.y-2;
+    return (2*border_ansi) + (ansi*fill_height) + (border_ansi*fill_height);
+}
 
-		// Copy position bytes to line
-		line_i += snprintf(line_s + line_i, line_max - line_i, "\033[%d;%dH",
-				o->pos.y + 1 + h,
-				o->pos.x + 1);
-		//             ^ Terminals index co-ordinates at 1
+struct dma {
+  int cap;
+  int idx;
+  char *str;
+};
 
-		// Generate and append line/row bytes
-		for(int line = 0; line < o->size.x; ++line)
-			line_i += snprintf(line_s + line_i, line_max - line_i, "%c", o->fill);
-		line_s[line_i] = '\0';
-		out_i += snprintf(out_s + out_i, out_max - out_i, "%s", line_s);
-	}
+void gen_pos_ansi(struct dma *o, int y, int x) {
+  o->idx += snprintf(o->str + o->idx, o->cap - o->idx, "\033[%d;%dH", y + 1, x + 1);
+}
 
-	// Final terminators
-	out_i += snprintf(out_s + out_i, out_max - out_i, "%s", _UI_RESET_CODE);
-	out_s[out_i] = '\0';
+char *_box_render(box *o) 
+{
+  size_t pos_b = get_pos_size(o); 
+  size_t fill_b = (o->size.x - 2) * (o->size.y - 2);
+  size_t border_b = get_border_size(o);
+	size_t ansi_b = get_ansi_size(o);
 
-  return out_s;
-} // clang-format off
+	struct dma out;
+  out.cap = pos_b + border_b + fill_b + ansi_b + 1;
+  printf("Using %d bytes\n", out.cap);
 
-/*
- * Called as a wrapper for box that initiates values
- * and returns the new initialized box.
- */
+  out.idx = 0;
+  out.str = malloc(out.cap);
+
+  // Render fill
+  for (int y = 0; y < o->size.y; ++y) 
+	{
+    gen_pos_ansi(&out, o->pos.y + y, o->pos.x);
+    for (int x = 0; x < o->size.x; ++x) 
+		{
+      char *border = is_border(o, y, x);
+			if (!border)
+			{
+				if(x == 1){
+					out.idx += snprintf(out.str + out.idx, out.cap - out.idx, "%s", o->ansi);	
+				}
+        // Write fill
+        out.str[out.idx++] = o->fill;
+      }
+			else 
+			{
+				if((x == 0 && y == 0) || (x == o->size.x - 1 && y != o->size.y - 1 && y != 0))
+				{
+					out.idx += snprintf(out.str + out.idx, out.cap - out.idx, "%s", o->border.ansi);
+				}
+        // Write border character
+        out.idx += snprintf(out.str + out.idx, out.cap - out.idx, "%s", border);
+      }
+    }
+  }
+
+  out.str[out.idx++] = '\0';
+
+  printf("remaining bytes: %d/%d\n", out.cap - out.idx, out.cap);
+  return out.str;
+}
+
+#define UI_BOX(...) _init_box((box){__VA_ARGS__})
+#define UI_BOX_DRAW(o) printf("%s", o._r)
 box _init_box(box o) {
-
-	// Pre-render
   o._r = _box_render(&o);
   return o;
 }
 
-#include "color.h"
-
 
 int main() {
 
-	struct vec2 box_size = vec(200,100);
+  struct vec2 box_size = vec(20, 10);
 
-  box one = UI_BOX(
-			box_size,
-			vec(0, 0),
-			.ansi = color(NULL, "#ff0000"), 
-			.fill = 'A');
+  border b = {
+      .top = "━",
+      .bottom = "━",
+      .left = "┃",
+      .right = "┃",
+      .top_right = "┓",
+      .top_left = "┏",
+      .bottom_left = "┗",
+      .bottom_right = "┛",
+      .ansi = "\033[48;2;255;0;0m",
+  };
 
-	box two = UI_BOX(
-			box_size,
-			vec(box_size.x, 0),
-			.ansi = color(NULL, "#00ff00"),
-			.fill = 'B');
+  box one = UI_BOX(box_size, vec(0, 3), .ansi = "\033[48;2;0;255;0m", .fill = '#', .border = b);
 
-	box three = UI_BOX(
-			box_size,
-			vec(0, box_size.y),
-			.ansi = color(NULL, "#0000ff"),
-			.fill = 'C');
+  // draw boxes
+  UI_BOX_DRAW(one);
 
-	// draw boxes
-	UI_BOX_DRAW(one);
-	UI_BOX_DRAW(two);
-	UI_BOX_DRAW(three);
-
-	// clean up
-	free(one._r);
-	free(two._r);
-	free(three._r);
+  // clean up
+  free(one._r);
 }
