@@ -1,42 +1,8 @@
 #ifndef IN_2
 #define IN_2 
-/* 
-#include <stdio.h>
-#include "in.h"
-
-// callbacks 
-void mycallback1(){ printf("b pressed\n"); }
-void mycallback2(){ printf("B pressed\n"); }
-void mycallback3(){ printf("Control+g pressed\n"); }
-
-
-int main() {
-	// global input
-  input globby;
-
-	// set triggers
-  in_key('b', mycallback1);
-  in_key('B', mycallback2);
-  in_spec_key('G', mycallback3);
-
-	// loop 
-  in_loop() {
-    in_catch(&globby);
-
-		// check triggers
-    in_update(&globby);
-    fflush(stdout);
-  }
-
-	// exit cleanly
-  in_clean();
-  return 1;
-}
-*/
-
-
 #include <unistd.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 typedef enum { MOVE, CLICK, RELEASE, SCROLL, SPECIAL, ERR, KEY } _in_ret;
 
@@ -45,7 +11,7 @@ static const char *_in_ret_s[8] = {
     [SCROLL] = "SCROLL", [SPECIAL] = "SPECIAL", [ERR] = "ERR",
     [KEY] = "KEY"};
 
-typedef void (*func)();
+typedef void (*func)(void *);
 
 #define in_loop()                                                              \
 	_in_raw();                                                                   \
@@ -77,18 +43,50 @@ typedef struct {
   func call;
   _in_ret type;
   char buf;
+	void *self;
   union {
     struct {
+			int x;
+			int y;
       int x1;
       int y1;
-      int x2;
-      int y2;
     } mouse;
     struct {
       char key;
     } special;
   };
 } trigger;
+
+struct vec2 {
+  int x, y;
+};
+
+// Border options
+typedef struct border {
+  char *top;
+  char *bottom;
+  char *right;
+  char *left;
+  char *top_left;
+  char *top_right;
+  char *bottom_left;
+  char *bottom_right;
+  char *ansi;
+} border;
+
+// Box options
+typedef struct box {
+  struct vec2 size;
+  struct vec2 pos;
+  char *ansi;
+  char fill;     // fill char
+  border border; // border
+  char *_r;      // Rendered
+	char *_r2;		 // Extra render slot
+	char *_r3;     // Extra extra render slot
+  int pr_idx;    // PRINT-IN index
+  int pr_inherit_ansi;
+} box;
 
 void _in_catch(char*, int, input*);
 void _in_app(trigger);
@@ -97,6 +95,11 @@ void in_clean(void);
 void _in_raw(void);
 void _in_no_raw(void);
 void _print_input(input in);
+void UI_CLEAR(box *o);
+box _init_box(box o);
+border _init_border(char*, char*, char*);
+void UI_PRINTIN(box *o, const char *fmt, ...);
+char *_box_render(box *o);
 
 extern trigger *in_trig_stack;
 
@@ -104,5 +107,13 @@ extern trigger *in_trig_stack;
 #define in_key(key, callback) in_app(.type = KEY, .buf = key, .call = callback)
 #define in_spec_key(key, callback)                                             \
   in_app(.type = SPECIAL, .buf = key, .call = callback)	
+#define in_hov_key(vec1, vec2, callback) in_app(.type = MOVE, .call = callback, .mouse.x = vec1.x, .mouse.y = vec1.y, .mouse.x1 = vec2.x, .mouse.y1 = vec2.x)
+#define in_box_hov_key(box, callback) in_app(.type = MOVE, .call = callback, .mouse.x = box.pos.x, .mouse.y = box.pos.x, .mouse.x1 = box.size.x, .mouse.y1 = box.size.y)
+#define in_box_clk_key(box, callback) in_app(.type = CLICK, .call = callback, .mouse.x = box.pos.x, .mouse.y = box.pos.x, .mouse.x1 = box.size.x, .mouse.y1 = box.size.y)
 #define in_catch(l) _in_catch(buf, n, l);
+#define UI_BOX(...) _init_box((box){__VA_ARGS__})
+#define UI_BOX_DRAW(o) printf("%s", o._r)
+#define VEC(x, y) (struct vec2) { x, y }
+#define UI_BORDER(a,b,c) _init_border(a,b,c)
+
 #endif // !DEBUG
