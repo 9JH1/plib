@@ -21,6 +21,7 @@ typedef void (*func)(void *);
 
 typedef struct {
   char buf;
+	int code;
   int len;
   _in_ret type;
   union {

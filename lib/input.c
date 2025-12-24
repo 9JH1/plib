@@ -135,7 +135,7 @@ void _in_catch(char *buf, int len, input *l) {
 
     // handle regular keys
   } else if (len == 1) {
-    l->buf = buf[0];
+    l->buf = l->code = buf[0];
     l->len = len;
     l->type = KEY;
     return;
