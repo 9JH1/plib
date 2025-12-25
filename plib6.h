@@ -48,14 +48,15 @@ enum {
 #define plib_ArgValueCount(a) a->idx
 #define plib_GetArgValue(a, n, arv) (n <= a->idx) ? arv[a->vals[n]] : NULL
 
+
 #define plib_ForEach(n1, n2, ar) \
 	plib_Arg = &(ar[n1]);         \
 	for(int i = n1; i < n2;i++,    \
 			plib_Arg = &(ar[i]))
 
-#define plib_CreateArgCount(ar,c) \
+#define plib_CreateArgCount(ar) \
 	PL_ARG_IDX += c;               \
-	plib_ForEach(0, c, ar){         \
+	plib_ForEach(0, sizeof(ar) / sizeof(struct plib_Argument), ar){ \
 		plib_Arg->opt = (1u << 2);   \
 		plib_Arg->idx = 0;            \
 		if (plib_Arg->flag == NULL) \
@@ -65,9 +66,13 @@ enum {
 #define plib_ForAll(ar) \
 	plib_ForEach(0, PL_ARG_IDX, ar)
 
+#define plib_For(a) \
+	plib_Arg = &(a); \
+	for(int i = 0; i < 1; i++)
 
-#define plib_InitArgForAll(ar)                      \
-	plib_CreateArgCount(ar, sizeof(ar) / sizeof(struct plib_Argument)) \
+
+#define plib_InitArgForAll(ar) \
+	plib_CreateArgCount(ar)     \
 	plib_ForAll(ar) 
 
 
@@ -76,6 +81,8 @@ enum {
 
 #define plib_ArgEnabled(a) \
 	(a->opt & (1u << 2))
+
+
 
 static int
 comp(char *s1, char *s2)
@@ -87,8 +94,6 @@ comp(char *s1, char *s2)
     }
     return *s1 - *s2;
 }
-
-#include <stdio.h>
 
 static int
 plib_Parse(int c, char *v[], struct plib_Argument *ar, char split_char)
@@ -104,33 +109,36 @@ plib_Parse(int c, char *v[], struct plib_Argument *ar, char split_char)
 	{
 		int arg_s = 0,
 			split = 0;
-		char key[arg_s-split];
 
 		// `strstr` without the `strstr` 
 		while(v[out->index][arg_s++])
 			if(v[out->index][arg_s] == split_char)
 				split = arg_s;
 
+		char key[arg_s-split];
+
 		// Separate key and value
-		for(int i = 0; i < split+1; i++){
-			if(i <= split){
+		for(int i = 0; i < (split ? split : arg_s)+1; i++){
+			if(i <= (split ? split : arg_s)){
 				key[i] = v[out->index][i];
-				if(i == split) 
+				if(split && i == split) 
 					key[i] = '\0';
+				else if (i == arg_s)
+					v[out->index][0] = '\0';
 			}
 			
 			if (split)
 				v[out->index][i] = v[out->index][i+split+1];
 		}
 
-		printf("%s - %s\n", key, v[out->index]);
-		
+
 		arg_s = -1;
 
 		// Search for argument in argument list
-		for(int i = 0; i < PL_ARG_IDX; i++)
-			if(comp(ar[i].flag, key) == 0 || comp(ar[i].shrt, key) == 0) 
+		for(int i = 0; i < PL_ARG_IDX; i++){
+			if(comp(ar[i].flag, key) == 0 || comp(ar[i].shrt, key) == 0)
 				arg_s = i;
+		}
 
 		// Argument was not found
 		if(arg_s == -1) 
@@ -158,4 +166,9 @@ plib_Parse(int c, char *v[], struct plib_Argument *ar, char split_char)
 
 	return out->code = PL_SUCCESS;
 }
+
+
+#define plib_Parse_ez(ar) \
+	plib_Parse(argc, argv, ar, '=')
+
 #endif
