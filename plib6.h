@@ -9,7 +9,6 @@
 
 #define PL_MAX_ARG_V 64
 
-
 struct plib_Argument {
 	char *flag;
 	char *shrt;
@@ -20,19 +19,16 @@ struct plib_Argument {
 	int  vals[PL_MAX_ARG_V];
 };
 
-
 struct plib_Return {
 	int index;
 	int code;
 };
 
-
 static int PL_ARG_IDX = 0;
 static struct plib_Argument *plib_Arg;
 static struct plib_Argument plib_Create_Arg;
 static struct plib_Return PL_RETURN;
-static char **plib_SystemArgumemnts;
-
+static int plib_Parse(int, char *[], struct plib_Argument *, char);
 
 enum {
 	PL_SUCCESS, PL_RETURN_TYPE_END, PL_ARG_NONE,
@@ -40,26 +36,22 @@ enum {
 	PL_TO_MANY_VALUES, PL_NO_REQUIRED_ARG
 };
 
-
 #define plib_SetRequired(a)            a->opt = a->opt ^ (1u << 3);
 #define plib_SetEnabled(a)             a->opt = a->opt ^ (1u << 2);
 #define plib_SetTakesMultipleValues(a) a->opt = a->opt ^ (1u << 1);
 #define plib_SetTakesValue(a)          a->opt = a->opt ^ (1u << 0);
 
-#define plib_ArgValueCount(a) a->idx
-#define plib_GetArgValue(a, n, arv) (n <= a->idx) ? arv[a->vals[n]] : NULL
-
 
 #define plib_ForEach(n1, n2, ar) \
-	plib_Arg = &(ar[n1]);         \
-	for(int i = n1; i < n2;i++,    \
+	plib_Arg = &(ar[n1]); \
+	for(int i = n1; i < n2;i++, \
 			plib_Arg = &(ar[i]))
 
 #define plib_CreateArgCount(ar) \
-	PL_ARG_IDX += sizeof(ar) / sizeof(struct plib_Argument);     \
+	PL_ARG_IDX += sizeof(ar) / sizeof(struct plib_Argument); \
 	plib_ForEach(0, sizeof(ar) / sizeof(struct plib_Argument), ar){ \
-		plib_Arg->opt = (1u << 2);   \
-		plib_Arg->idx = 0;            \
+		plib_Arg->opt = (1u << 2); \
+		plib_Arg->idx = 0; \
 		if (plib_Arg->flag == NULL) \
 			plib_SetEnabled(plib_Arg) \
 	}
@@ -71,21 +63,17 @@ enum {
 	plib_Arg = &(a); \
 	for(int i = 0; i < 1; i++)
 
-
 #define plib_InitArgForAll(ar) \
-	plib_CreateArgCount(ar)     \
+	plib_CreateArgCount(ar) \
 	plib_ForAll(ar) 
 
+#define plib_Parse_ez(ar) \
+	(plib_Parse(argc, argv, ar, '=') == PL_SUCCESS)
 
-#define plib_WasRun(a) \
-	(a->idx > 0)
-
-#define plib_ArgEnabled(a) \
-	(a->opt & (1u << 2))
-
-#define plib_InOrigArgv(i) \
-	plib_SystemArgumemnts[i]
-
+#define plib_WasRun(a) (a->idx > 0)
+#define plib_ArgEnabled(a) (a->opt & (1u << 2))
+#define plib_ArgValueCount(a) a->idx
+#define plib_GetArgValue(a, n, arv) (n <= a->idx) ? arv[a->vals[n]] : NULL
 
 static int
 comp(char *s1, char *s2)
@@ -98,12 +86,10 @@ comp(char *s1, char *s2)
     return *s1 - *s2;
 }
 
-
 static int
 plib_Parse(int c, char *v[], struct plib_Argument *ar, char split_char)
 {
 	struct plib_Return *out = &PL_RETURN;
-	plib_SystemArgumemnts = v;
 	
 	// No arguments where provided
 	if(c <= 1)
@@ -177,8 +163,5 @@ plib_Parse(int c, char *v[], struct plib_Argument *ar, char split_char)
 
 	return out->code = PL_SUCCESS;
 }
-
-#define plib_Parse_ez(ar) \
-	plib_Parse(argc, argv, ar, '=')
 
 #endif
