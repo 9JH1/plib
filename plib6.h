@@ -31,12 +31,13 @@ static int PL_ARG_IDX = 0;
 static struct plib_Argument *plib_Arg;
 static struct plib_Argument plib_Create_Arg;
 static struct plib_Return PL_RETURN;
+static char **plib_SystemArgumemnts;
 
 
 enum {
 	PL_SUCCESS, PL_RETURN_TYPE_END, PL_ARG_NONE,
 	PL_ARG_NOT_FOUND, PL_ARG_VALUE, PL_ARG_NO_VALUE,
-	PL_TO_MANY_VALUES
+	PL_TO_MANY_VALUES, PL_NO_REQUIRED_ARG
 };
 
 
@@ -55,7 +56,7 @@ enum {
 			plib_Arg = &(ar[i]))
 
 #define plib_CreateArgCount(ar) \
-	PL_ARG_IDX += c;               \
+	PL_ARG_IDX += sizeof(ar) / sizeof(struct plib_Argument);     \
 	plib_ForEach(0, sizeof(ar) / sizeof(struct plib_Argument), ar){ \
 		plib_Arg->opt = (1u << 2);   \
 		plib_Arg->idx = 0;            \
@@ -82,6 +83,8 @@ enum {
 #define plib_ArgEnabled(a) \
 	(a->opt & (1u << 2))
 
+#define plib_InOrigArgv(i) \
+	plib_SystemArgumemnts[i]
 
 
 static int
@@ -95,10 +98,12 @@ comp(char *s1, char *s2)
     return *s1 - *s2;
 }
 
+
 static int
 plib_Parse(int c, char *v[], struct plib_Argument *ar, char split_char)
 {
 	struct plib_Return *out = &PL_RETURN;
+	plib_SystemArgumemnts = v;
 	
 	// No arguments where provided
 	if(c <= 1)
@@ -131,7 +136,6 @@ plib_Parse(int c, char *v[], struct plib_Argument *ar, char split_char)
 				v[out->index][i] = v[out->index][i+split+1];
 		}
 
-
 		arg_s = -1;
 
 		// Search for argument in argument list
@@ -157,16 +161,22 @@ plib_Parse(int c, char *v[], struct plib_Argument *ar, char split_char)
 			return out->code = PL_ARG_VALUE;
 
 		// Check if argument can hold any more values
-		else if((ar[arg_s].idx == 1 && (ar[arg_s].opt & (1u << 1))) || ar[arg_s].idx == PL_MAX_ARG_V)
+		else if((ar[arg_s].idx == 1 && !(ar[arg_s].opt & (1u << 1))) || ar[arg_s].idx == PL_MAX_ARG_V)
 			return out->code = PL_TO_MANY_VALUES;
 
 		// Assign the value
 		ar[arg_s].vals[ar[arg_s].idx++] = out->index;
 	}
 
+	// Check for required arguments 
+	for(int i=0; i < PL_ARG_IDX; i++)
+		if(ar[i].opt & (1u << 3) && !ar[i].idx){
+			out->index = 0;
+			return out->code = PL_NO_REQUIRED_ARG;
+		}
+
 	return out->code = PL_SUCCESS;
 }
-
 
 #define plib_Parse_ez(ar) \
 	plib_Parse(argc, argv, ar, '=')

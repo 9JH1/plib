@@ -178,5 +178,7 @@ Instead of using the `plib_CreateArgCount` and then using a `ForAll` loop right 
 
 You can change the amount of values each argument can hold by changing increasing the `PL_MAX_ARG_V` constant, alternativly you could pass `-DPL_MAX_ARG_V=<size>` into your compiler where `<size>` is the amount of values each argument can hold at a maximum, default is 64.
 
+Like mentioned previously `Plib` overwrites the system argument array so it can return the argument value without allocation, this means that if an error occurs the index in argv will actually be the VALUE of the argument that caused the error! To fix this id suggest making a constant copy of argv before parsing and then using the constant argv with any error indexes from parsing, that way you get the actual argument that caused the error and not just the value.s
+
 ---
 End of file
