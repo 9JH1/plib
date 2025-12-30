@@ -42,7 +42,8 @@ main(int argc, char *argv[])
 
 	return 0;
 }
+
 --------------------------------------------------------------
 
-Yes thats it! again look at examples/README.md for the full documentation, this 
-file also contains information on other things.
+Yes thats it! again look at the wiki for the full documentation, this 
+file also contains information on literally everything else.
