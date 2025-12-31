@@ -27,7 +27,7 @@ struct plib_Return {
 static int PL_ARG_IDX = 0;
 static struct plib_Argument *plib_Arg;
 static struct plib_Argument plib_Create_Arg;
-static struct plib_Return PL_RETURN;
+static struct plib_Return PL_RETURN = (struct plib_Return){0};
 static int plib_Parse(int, char *[], struct plib_Argument *, char);
 
 enum {
