@@ -67,7 +67,7 @@ enum {
 	plib_CreateArgCount(ar) \
 	plib_ForAll(ar) 
 
-#define plib_Parse_ez(ar) \
+#define if_plib_Parse(ar) \
 	if (plib_Parse(argc, argv, ar, '=') != PL_SUCCESS)
 
 #define plib_WasRun(a) (a->idx > 0)
