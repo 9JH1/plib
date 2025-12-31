@@ -68,7 +68,7 @@ enum {
 	plib_ForAll(ar) 
 
 #define plib_Parse_ez(ar) \
-	(plib_Parse(argc, argv, ar, '=') == PL_SUCCESS)
+	if (plib_Parse(argc, argv, ar, '=') != PL_SUCCESS)
 
 #define plib_WasRun(a) (a->idx > 0)
 #define plib_ArgEnabled(a) (a->opt & (1u << 2))
