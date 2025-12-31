@@ -19,8 +19,15 @@ All features:
 - Full error handling.
 - Extensive features.
 
-Quickstart:
-In order to use plib first download the plib6.h file and import it into your C project.
+Quickstart: 
+You only require the plib6.h file which you can download like so:
+
+Edge:
+wget https://raw.githubusercontent.com/9JH1/plib/refs/heads/main/plib6.h
+
+Stable:
+wget https://github.com/9JH1/plib/blob/6.0.4/plib6.h
+
 The following is all that is required for basic implementation:
 ---------------------------------------------------------------
 #include "plib6.h"
@@ -45,5 +52,5 @@ main(int argc, char *argv[])
 
 --------------------------------------------------------------
 
-Yes thats it! again look at the wiki for the full documentation, this 
+Again look at the wiki for the full documentation, this 
 file also contains information on literally everything else.
