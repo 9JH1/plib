@@ -1,10 +1,11 @@
-plib 6.x.x
+PLib 6.x.x
+Wiki: https://github.com/9JH1/plib/wiki
 -------------------------
-plib is a C library made to make parsing command line arguments easier.
+PLib is a C library made to make parsing command line arguments easier.
 The Latest version of plib uses zero memory allocation and is a completely
 header-only library which makes compilation a breeze.
 
-To use plib in your codebase you will just require the plib6.h file from this 
+To use PLib in your codebase you will just require the plib6.h file from this 
 repo, everything else is not neccercery. see examples/README.md for the full 
 documentation.
 
@@ -19,6 +20,7 @@ All features:
 - Full error handling.
 - Extensive features.
 
+--------------------------
 Quickstart: 
 You only require the plib6.h file which you can download like so:
 
@@ -29,7 +31,7 @@ Stable:
 wget https://github.com/9JH1/plib/blob/6.0.4/plib6.h
 
 The following is all that is required for basic implementation:
----------------------------------------------------------------
+--------------------------
 #include "plib6.h"
 
 int 
@@ -49,8 +51,3 @@ main(int argc, char *argv[])
 
 	return 0;
 }
-
---------------------------------------------------------------
-
-Again look at the wiki for the full documentation, this 
-file also contains information on literally everything else.
