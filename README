@@ -49,6 +49,11 @@ main(int argc, char *argv[])
 	// Actually parse the arguments
 	plib_Parse(argc, argv, pl, '=');
 
+	// Get an arguments value
+	if(plib_ArgWasRun(pl[0])){
+		printf("--test value: %s\n", plib_ArgGetValue(pl[0], 0, argv));
+	}
+
 	return 0;
 }
 

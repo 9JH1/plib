@@ -234,7 +234,7 @@ plib_Parse(int c, char *v[], struct plib_Argument *ar, char split_char)
 /**
  * @brief conditional if argument was run.
  **/
-#define plib_WasRun(a) (a->idx > 0)
+#define plib_ArgWasRun(a) (a->idx > 0)
 
 /**
  * @brief get argument count
@@ -244,6 +244,6 @@ plib_Parse(int c, char *v[], struct plib_Argument *ar, char split_char)
 /**
  * @brief get an arguments value at a certain index (with basic error checking)
  **/
-#define plib_GetArgValue(a, n, arv) (n <= a->idx) ? arv[a->vals[n]] : NULL
+#define plib_ArgGetValue(a, n, arv) (n <= a->idx) ? arv[a->vals[n]] : NULL
 
 #endif
