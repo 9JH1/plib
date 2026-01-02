@@ -51,3 +51,28 @@ main(int argc, char *argv[])
 
 	return 0;
 }
+
+--------------------------
+This program uses doxygen documentation to generate documentation.
+To generate the documentation please do the following
+
+doxygen -g .plibDoxy
+doxygen .plibDoxy
+
+Now if you open the ./html/index.html in your browser you can view 
+the documentation.
+--------------------------
+File discriptors             Description
+.
+├── .gitignore
+├── .lib                     Depricated / Testing librarys.
+│   ├── .draw_depricated.txt Depricated version of the draw lib.
+│   ├── ansi.h               provides macros for various ansi operations.
+│   ├── color.h              ansi color generation.
+│   ├── input.c              input pipe with mouse support and box drawing functions (depricated).
+│   ├── input.h              input.c header file.
+│   └── todo.txt             TODO.txt (outdated).
+├── README                   This file.
+└── plib6.h                  plib6.h edge.
+
+2 directories, 11 files
