@@ -1,5 +1,5 @@
 PLib 6.x.x
-Wiki: https://github.com/9JH1/plib/wiki
+Documentation instructions at the bottom.
 -------------------------
 PLib is a C library made to make parsing command line arguments easier.
 The Latest version of plib uses zero memory allocation and is a completely
