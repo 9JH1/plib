@@ -278,7 +278,7 @@ typedef int (*plib_PrintFuncType)(const char *, ...);
  *
  **/
 static void
-plib_HelpMenu(struct plib_Argument *ar, plib_PrintFuncType print)
+_plib_HelpMenu(struct plib_Argument *ar, plib_PrintFuncType print)
 {
 	if(PL_ARG_IDX <= 0){
 		print("No arguments set\n"); 
@@ -328,4 +328,6 @@ plib_HelpMenu(struct plib_Argument *ar, plib_PrintFuncType print)
 	}
 	#undef print_space
 }
+#define plib_HelpMenu(ar) \
+	_plib_HelpMenu(ar, printf)
 #endif
