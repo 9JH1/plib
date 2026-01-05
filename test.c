@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "plib6.h"
+
 /* Arguments */
 enum {
 	help, template, template_file, json_file,
@@ -30,7 +31,7 @@ main(int argc, char *argv[])
 
 	ifnot_plib_Parse(pl){
 		printf("Options: \n");
-		plib_HelpMenu(pl, printf);
+		plib_HelpMenu(pl);
 		if(PL_RETURN.code != PL_ARG_NONE){
 			printf("\nArgument parsing error occured:\n");
 			printf("Code: %d\n", PL_RETURN.code);
