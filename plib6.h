@@ -2,10 +2,12 @@
 #ifndef PLIB_6
 #define PLIB_6
 
+
 #include <stdint.h>
 #include <inttypes.h>
 #include <sys/types.h>
 #include <stdbool.h>
+
 
 /**
  * @brief maximum amount of values an argument can hold.
@@ -22,12 +24,14 @@ enum {
 	PL_TO_MANY_VALUES, PL_NO_REQUIRED_ARG
 };
 
+
 /**
  * @brief contains all arguemnt information
  *
  * @param flag flagname like --flag
  * @param shrt short flag name like -f
  * @param desc description
+ * @param catg catagory for argument displayed in help menu
  * @param opt uint8_t byte holding toggleable propertys.
  * @param idx amount of values the argument has
  * @param vals array of indexes pointing to values in argv.
@@ -36,11 +40,13 @@ struct plib_Argument {
 	char *flag;
 	char *shrt;
 	char *desc;
+	char *catg; 
 	
 	uint8_t opt; 
 	int idx;
 	int  vals[PL_MAX_ARG_V];
 };
+
 
 /**
  * @brief return struct for parse function
@@ -50,10 +56,12 @@ struct plib_Return {
 	int code;
 };
 
+
 /**
  * @brief amount of defined arguments updated through use of @ref plib_CreateArgCount
  **/
 static int PL_ARG_IDX = 0;
+
 
 /**
  * @brief global-local argument pointer used in loops.
@@ -64,10 +72,12 @@ static int PL_ARG_IDX = 0;
  **/
 static struct plib_Argument *plib_Arg;
 
+
 /**
  * @brief global return struct containing last parse output.
  **/
 static struct plib_Return PL_RETURN = (struct plib_Return){0};
+
 
 /**
  * @brief returns the value of a bit at a certain index.
@@ -81,6 +91,7 @@ enum { PLIB_SETTAKESVALUE, PLIB_SETENABLED,
 	PLIB_SETTAKESVALUES, PLIB_SETREQUIRED, 
 	PLIB_SETENDARGUMENTLIST 
 };
+
 
 /**
  * @brief we have strcmp at home!
@@ -98,6 +109,7 @@ comp(char *s1, char *s2)
     }
     return *s1 - *s2;
 }
+
 
 /**
  * @brief parse system arguments
@@ -180,6 +192,7 @@ plib_Parse(int c, char *v[], struct plib_Argument *ar, char split_char)
 	return out->code = PL_SUCCESS;
 }
 
+
 /**
  * @brief toggles a bit at a certain index. use the argument enum for more
  **/
@@ -195,21 +208,24 @@ plib_Parse(int c, char *v[], struct plib_Argument *ar, char split_char)
 	for(int i = n1; i < n2;i++, \
 			plib_Arg = &(ar[i]))
 
+
 /**
  * @brief initialize arguments
  **/
 #define plib_CreateArgCount(ar) \
-	PL_ARG_IDX += sizeof(ar) / sizeof(struct plib_Argument); \
-	plib_ForEach(0, sizeof(ar) / sizeof(struct plib_Argument), ar){ \
+	PL_ARG_IDX = sizeof(ar) / sizeof(struct plib_Argument); \
+	plib_ForEach(0, PL_ARG_IDX, ar){ \
 		plib_Arg->opt = (1u << PLIB_SETENABLED); \
 		plib_Arg->idx = 0; \
 	}
+
 
 /**
  * @brief loop through all arguments
  **/
 #define plib_ForAll(ar) \
 	plib_ForEach(0, PL_ARG_IDX, ar)
+
 
 /**
  * @brief use a single argument
@@ -218,6 +234,7 @@ plib_Parse(int c, char *v[], struct plib_Argument *ar, char split_char)
 	plib_Arg = &(a); \
 	for(int i = 0; i < 1; i++)
 
+
 /**
  * @brief initialize arguments and start a forall loop
  **/
@@ -225,25 +242,90 @@ plib_Parse(int c, char *v[], struct plib_Argument *ar, char split_char)
 	plib_CreateArgCount(ar) \
 	plib_ForAll(ar) 
 
+
 /**
  * @brief conditional simplicity function
  **/
 #define ifnot_plib_Parse(ar) \
 	if (plib_Parse(argc, argv, ar, '=') != PL_SUCCESS)
 
+
 /**
  * @brief conditional if argument was run.
  **/
 #define plib_ArgWasRun(a) (a->idx > 0)
+
 
 /**
  * @brief get argument count
  **/
 #define plib_ArgValueCount(a) a->idx
 
+
 /**
  * @brief get an arguments value at a certain index (with basic error checking)
  **/
 #define plib_ArgGetValue(a, n, arv) (n <= a->idx) ? arv[a->vals[n]] : NULL
 
+
+typedef int (*plib_PrintFuncType)(const char *, ...);
+
+/**
+ * @brief display arguments in basic help ui
+ *
+ * This function takes in the argument array and its size and
+ * will display each in its own little 
+ *
+ **/
+static void
+plib_HelpMenu(struct plib_Argument *ar, plib_PrintFuncType print)
+{
+	if(PL_ARG_IDX <= 0){
+		print("No arguments set\n"); 
+		return;
+	}
+
+	// print string
+	#define print_space(str, len) \
+		do { \
+			print("%s", str); \
+			int c_s = 0; while(str[c_s++]); \
+			for(int i = 0; i < len - c_s; i++) print(" "); \
+			print(" | "); \
+		} while(0)
+
+	int flag_s = -1;
+	int shrt_s = -1;
+
+	for(int i = 0; i < PL_ARG_IDX; i++)
+	{
+		// Get spacing values:
+		if (flag_s == -1){
+			for(int j = 0;j < PL_ARG_IDX; j++)
+			{
+				if(shrt_s == -1){
+					int loc_s = 0;
+					while(ar[j].shrt[loc_s++]);
+				
+					if(loc_s > flag_s){
+						shrt_s = loc_s;
+					}
+				}
+
+				int loc_s = 0;
+
+				while(ar[j].flag[loc_s++]);
+				if(loc_s > flag_s)
+					flag_s = loc_s;
+			}
+		}
+
+		// Print argument data 
+		struct plib_Argument loc = ar[i];
+		print_space(loc.flag, flag_s);
+		print_space(loc.shrt, shrt_s);
+		print("%s\n", loc.desc);
+	}
+	#undef print_space
+}
 #endif
