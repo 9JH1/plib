@@ -1,75 +1,34 @@
-PLib 6.x.x
+PLib 6.1.4
 Documentation instructions at the bottom.
 -------------------------
 PLib is a C library made to make parsing command line arguments easier.
 The Latest version of plib uses zero memory allocation and is a completely
 header-only library which makes compilation a breeze.
 
-To use PLib in your codebase you will just require the plib6.h file from this 
-repo, everything else is not neccercery. see examples/README.md for the full 
-documentation.
-
-All features:
+Features:
 - Header only library 
-- Under 170 lines of code.
-- Only 2 functions.
-- Does not use any malloc/free or any stdlib.h for that matter 
+- Just over 300 lines of code.
+- Completly static allocation.
 - Optimized for user control.
-- Intuitive variable recycling system used to return argument value.
 - Very simple usage and installation.
-- Full error handling.
-- Extensive features.
+- Extensive Error handling
 
 --------------------------
 Quickstart: 
 You only require the plib6.h file which you can download like so:
 
 Edge:
-wget https://raw.githubusercontent.com/9JH1/plib/refs/heads/main/plib6.h
+wget https://raw.githubusercontent.com/x3hy/plib/refs/heads/main/plib6.h
 
 Stable:
-wget https://github.com/9JH1/plib/blob/6.0.4/plib6.h
-
-The following is all that is required for basic implementation:
+wget https://raw.githubusercontent.com/x3hy/plib/refs/tags/6.1.4/plib6.h
 --------------------------
-#include "plib6.h"
+check out example.c for a quickstart!
+view the wiki for the full documentation.
 
-int 
-main(int argc, char *argv[])
-{
-	// Create argument array 
-	struct plib_Argument pl[1] = {
-		/* flag,    short name,  description */
-		{ "--test", "-t",       "Description here!" }
-	};
-
-	// Initialize arguments 
-	plib_CreateArgCount(pl);
-
-	// Actually parse the arguments
-	plib_Parse(argc, argv, pl, '=');
-
-	// Get an arguments value
-	if(plib_ArgWasRun(pl[0])){
-		printf("--test value: %s\n", plib_ArgGetValue(pl[0], 0, argv));
-	}
-
-	return 0;
-}
-
---------------------------
-This program uses doxygen documentation to generate documentation.
-To generate the documentation please do the following
-
-doxygen -g .plibDoxy
-doxygen .plibDoxy
-
-Now if you open the ./html/index.html in your browser you can view 
-the documentation.
---------------------------
 File discriptors             Description
 .
-├── .gitignore
+├── .gitignore               Ignore
 ├── .lib                     Depricated / Testing librarys.
 │   ├── .draw_depricated.txt Depricated version of the draw lib.
 │   ├── ansi.h               provides macros for various ansi operations.
@@ -78,6 +37,7 @@ File discriptors             Description
 │   ├── input.h              input.c header file.
 │   └── todo.txt             TODO.txt (outdated).
 ├── README                   This file.
-└── plib6.h                  plib6.h edge.
+├── plib6.h                  Main header file
+└── example.c                Example quickstart code 
 
 2 directories, 11 files
