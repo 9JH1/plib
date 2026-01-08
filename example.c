@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include "plib6.h"
 
-/* Arguments */
+// Arguments
 enum {
 	help, template, template_file, json_file,
 	delimiter_char, output_file, no_print,
@@ -9,9 +9,9 @@ enum {
 };
 
 int
-main(int argc, char *argv[])
+main (int argc, char *argv[])
 {
-	// Set argument array
+	// Setup argument array
 	static struct plib_Argument pl[end_arg] = {
 		[help]           = {"--help",           "-h", "Display this dialog"},
 		[template]       = {"--template",       "-t", "Set HTML template string"},
@@ -22,22 +22,36 @@ main(int argc, char *argv[])
 		[no_print]       = {"--no-print",       "",   "Disable final print to stdout"}
 	};
 
+
 	// Initialize arguments
-	plib_CreateArgCount(pl);
+	plib_CreateArgCount (pl);
 
 	// Set value arguments
-	plib_ForEach(1,4, pl)
-		plib_ToggleProperty(plib_Arg, PLIB_SETTAKESVALUE);
+	plib_ForEach (1,5, pl)
+	  {
+		plib_ToggleProperty (plib_Arg, PLIB_TAKESVALUE);
+		plib_ToggleProperty (plib_Arg, PLIB_ENABLED);
+	  }
+	
+	// Handle errors
+	ifnot_plib_Parse (pl)
+	  {
+		printf ("Options: \n");
+		plib_HelpMenu (pl);
+		
+		if (PL_RETURN.code != PL_ARG_NONE)
+		  {
+			// Print error data
+			printf( "\nArgument parsing error occured:\n");
+			printf ("%s (%s)\n",
+					plib_Error, plib_ErrorArgument);
+			return 1;
+		  }
+		
+		printf ("No arguments provided.\n");
+		return 0;
+	  }
 
-	ifnot_plib_Parse(pl){
-		printf("Options: \n");
-		plib_HelpMenu(pl);
-		if(PL_RETURN.code != PL_ARG_NONE){
-			printf("\nArgument parsing error occured:\n");
-			printf("Code: %d\n", PL_RETURN.code);
-			printf("Idx: %d (%s)\n", PL_RETURN.index, argv[PL_RETURN.index]);
-		} else printf("No arguments provided.\n");
-	}
-
+	// Exit (no cleanup procedure)
 	return 0;
 }
