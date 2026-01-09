@@ -348,11 +348,14 @@ _plib_HelpMenu(struct plib_Argument *ar, plib_PrintFuncType print)
 
 // Returns a value at a certain index,
 // has error checking for null values.
-#define plib_ArgGetValueI(a, n) \
+// assumes pointer a.
+#define plib_ArgGetValue(a, n) \
 	(n <= a->idx) ? argv[a->vals[n]] : NULL
 
-#define plib_ArgGetValue(a) \
-	argv[a->vals[0]]
+// Returns the first value of an 
+// argument. assumes static a.
+#define plib_ArgGetFirstValue(a) \
+	argv[a.vals[0]]
 
 // Display help menu of 
 // arguments in argument 
