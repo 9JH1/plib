@@ -328,35 +328,6 @@ _plib_HelpMenu(struct plib_Argument *ar, plib_PrintFuncType print)
 	plib_CreateArgCount (ar) \
 	plib_ForAll (ar) 
 
-// Parses arguments and acts as an if statement, the 
-// scope will run if plib_Parse fails to run. This 
-// macro takes in argc and argv automatically, but 
-// it will fail to function if argc and argv are not 
-// defined. also note that the spit_char value '=' 
-// has been provided. If you want to change this char
-// you will need to use the implicit function. 
-#define ifnot_plib_Parse(ar) \
-	if (plib_Parse(argc, argv, ar, '=') != PL_SUCCESS)
-
-// Conditional for if an argument was
-// run.
-#define plib_ArgWasRun(a) (a->idx > 0)
-
-// Get the amount of values assigned 
-// to an argument.
-#define plib_ArgValueCount(a) a->idx
-
-// Returns a value at a certain index,
-// has error checking for null values.
-// assumes pointer a.
-#define plib_ArgGetValue(a, n) \
-	(n <= a->idx) ? argv[a->vals[n]] : NULL
-
-// Returns the first value of an 
-// argument. assumes static a.
-#define plib_ArgGetFirstValue(a) \
-	argv[a.vals[0]]
-
 // Display help menu of 
 // arguments in argument 
 // list, this macro takes
@@ -371,14 +342,62 @@ _plib_HelpMenu(struct plib_Argument *ar, plib_PrintFuncType print)
 // menu, OR you can of course
 // just re-write your own help
 // function.
-#define plib_HelpMenu(ar) \
-	_plib_HelpMenu (ar, printf)
+ #define plib_HelpMenu(ar) \
+ 	_plib_HelpMenu (ar, printf)
 
 // Returns string version
 // of an error code.
 #define plib_Error \
    	_plib_return_strings[PL_RETURN.code]
 
+// Parses arguments and acts as an if statement, the 
+// scope will run if plib_Parse fails to run. This 
+// macro takes in argc and argv automatically, but 
+// it will fail to function if argc and argv are not 
+// defined. also note that the spit_char value '=' 
+// has been provided. If you want to change this char
+// you will need to use the implicit function. 
+#define ifnot_plib_Parse(ar) \
+	if (plib_Parse(argc, argv, ar, '=') != PL_SUCCESS)
+
+// returns argv value of last 
+// parsed string argument
 #define plib_ErrorArgument \
 	argv[PL_RETURN.index]
+
+// Conditional for if an argument was
+// run.
+// #define plib_ArgWasRun(a) (a->idx > 0)
+
+// Get the amount of values assigned 
+// to an argument.
+// #define plib_ArgValueCount(a) a->idx
+
+// Returns a value at a certain index,
+// has error checking for null values.
+// assumes pointer a.
+// #define plib_ArgGetValue(a, n) \
+//	(n <= a->idx) ? argv[a->vals[n]] : NULL
+
+// Returns the first value of an 
+//  argument. assumes static a.
+//#define plib_ArgGetFirstValue(a) \
+//	argv[a.vals[0]]
+
+#define plib_ArgRun(a) (a->idx > 0)
+#define plib_SArgRun(a) (a.idx > 0)
+
+#define plib_ArgValueCount(a) a->idx
+#define plib_SArgValueCount(a) a.idx
+
+#define plib_ArgValue(a, n) \
+	(n < a->idx) ? argv[a->vals[n]] : NULL
+#define plib_SArgValue(a, n) \
+	(n < a.idx) ? argv[a.vals[n]] : NULL
+
+#define plib_ArgGetFirstValue(a) \
+	(a->idx > 0) ? argv[a->vals[0]] : NULL
+#define plib_SArgGetFirstValue(a) \
+	(a.idx > 0) ? argv[a.vals[0]] : NULL
+
 #endif

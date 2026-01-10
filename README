@@ -1,4 +1,4 @@
-PLib 6.1.4
+PLib 6.1.6
 Documentation instructions at the bottom.
 -------------------------
 PLib is a C library made to make parsing command line arguments easier.
@@ -21,7 +21,7 @@ Edge:
 wget https://raw.githubusercontent.com/x3hy/plib/refs/heads/main/plib6.h
 
 Stable:
-wget https://raw.githubusercontent.com/x3hy/plib/refs/tags/6.1.4/plib6.h
+wget https://raw.githubusercontent.com/x3hy/plib/refs/tags/6.1.6/plib6.h
 --------------------------
 check out example.c for a quickstart!
 view the wiki for the full documentation.
