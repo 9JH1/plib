@@ -14,17 +14,22 @@ Features:
 - Extensive Error handling
 
 --------------------------
-Quickstart: 
-You only require the plib6.h file which you can download like so:
+Download/Install: 
+You only require the plib6.h file which you can download locally
+like so:
 
 Edge:
 wget https://raw.githubusercontent.com/x3hy/plib/refs/heads/main/plib6.h
 
 Stable:
 wget https://raw.githubusercontent.com/x3hy/plib/refs/tags/6.1.6/plib6.h
+
 --------------------------
-check out example.c for a quickstart!
-view the wiki for the full documentation.
+
+You can read through example.c for a quickstart template. and you can 
+read the full documentation that the wiki link in the header.
+
+--------------------------
 
 File discriptors             Description
 .
