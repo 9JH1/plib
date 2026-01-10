@@ -7,7 +7,7 @@ header-only library which makes compilation a breeze.
 
 Features:
 - Header only library 
-- Just over 300 lines of code.
+- Roughly ~400 lines of code.
 - Completly static allocation.
 - Optimized for user control.
 - Very simple usage and installation.
