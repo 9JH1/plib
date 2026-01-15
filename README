@@ -10,8 +10,8 @@ Features:
 - Optimized for user control.
 - Very simple usage and installation.
 - Extensive Error handling
-
 --------------------------
+
 Download/Install: 
 You only require the plib6.h file which you can download locally like so:
 
@@ -22,5 +22,4 @@ Stable:
 wget https://raw.githubusercontent.com/x3hy/plib/refs/tags/6.1.7/plib6.h
 
 --------------------------
-
-You can read through example.c for a quickstart template. and you can read the full documentation that the wiki link in the header.
+example.c contains quickstart code, please view the documentation link provided at the top of the project if you're stuck.
