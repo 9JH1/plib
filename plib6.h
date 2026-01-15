@@ -134,6 +134,7 @@ _plib_strlen (char *str)
 		return e; \
 	} while(0)
 
+#include <stdio.h>
 
 // Iterates through all string arguments
 // and parses them with the provided 
@@ -178,8 +179,9 @@ plib_Parse (int c, char *v[], struct plib_Argument *ar, char split_char)
 
 		// Separate key and value from argument string
 		char key[arg_s-split];
-		for (int i = 0; i < (split ? split : arg_s) + 1; i++)
+		for (int i = 0; i < arg_s; i++)
 		  {
+			printf("key: %s\nargv: %s\n", key, v[out->index]);
 			if (i <= (split ? split : arg_s))
 			  {
 				key[i] = v[out->index][i];
@@ -260,6 +262,7 @@ _plib_HelpMenu(struct plib_Argument *ar, plib_PrintFuncType print)
 	int flag_s = -1;
 	int shrt_s = -1;
 
+	// TODO: FIX THIS CRAP
 	// Get spacing values:
 	for (int i = 0; i < PL_ARG_IDX; i++)
 	  {
