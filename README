@@ -22,7 +22,7 @@ Edge:
 wget https://raw.githubusercontent.com/x3hy/plib/refs/heads/main/plib6.h
 
 Stable:
-wget https://raw.githubusercontent.com/x3hy/plib/refs/tags/6.1.6/plib6.h
+wget https://raw.githubusercontent.com/x3hy/plib/refs/tags/6.1.7/plib6.h
 
 --------------------------
 
