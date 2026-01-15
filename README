@@ -1,9 +1,7 @@
 PLib 6.1.6
 Documentation : https://github.com/x3hy/plib/wiki
 -------------------------
-PLib is a C library made to make parsing command line arguments easier.
-The Latest version of plib uses zero memory allocation and is a completely
-header-only library which makes compilation a breeze.
+PLib is a C library made to make parsing command line arguments easier. The Latest version of plib uses zero memory allocation and is a completely header-only library which makes compilation a breeze.
 
 Features:
 - Header only library 
@@ -15,34 +13,14 @@ Features:
 
 --------------------------
 Download/Install: 
-You only require the plib6.h file which you can download locally
-like so:
+You only require the plib6.h file which you can download locally like so:
 
 Edge:
 wget https://raw.githubusercontent.com/x3hy/plib/refs/heads/main/plib6.h
 
-Stable:
+Stable: 
 wget https://raw.githubusercontent.com/x3hy/plib/refs/tags/6.1.7/plib6.h
 
 --------------------------
 
-You can read through example.c for a quickstart template. and you can 
-read the full documentation that the wiki link in the header.
-
---------------------------
-
-File discriptors             Description
-.
-├── .gitignore               Ignore
-├── .lib                     Depricated / Testing librarys.
-│   ├── .draw_depricated.txt Depricated version of the draw lib.
-│   ├── ansi.h               provides macros for various ansi operations.
-│   ├── color.h              ansi color generation.
-│   ├── input.c              input pipe with mouse support and box drawing functions (depricated).
-│   ├── input.h              input.c header file.
-│   └── todo.txt             TODO.txt (outdated).
-├── README                   This file.
-├── plib6.h                  Main header file
-└── example.c                Example quickstart code 
-
-2 directories, 11 files
+You can read through example.c for a quickstart template. and you can read the full documentation that the wiki link in the header.
