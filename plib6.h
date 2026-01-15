@@ -134,8 +134,6 @@ _plib_strlen (char *str)
 		return e; \
 	} while(0)
 
-#include <stdio.h>
-
 // Iterates through all string arguments
 // and parses them with the provided 
 // plib_Argument struct array and then 
@@ -181,7 +179,6 @@ plib_Parse (int c, char *v[], struct plib_Argument *ar, char split_char)
 		char key[arg_s-split];
 		for (int i = 0; i < arg_s; i++)
 		  {
-			printf("key: %s\nargv: %s\n", key, v[out->index]);
 			if (i <= (split ? split : arg_s))
 			  {
 				key[i] = v[out->index][i];
