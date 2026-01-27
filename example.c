@@ -19,7 +19,6 @@ main (int argc, char *argv[])
 		[test_arg_3] = {"--test3", "-t3", "test argument 3"}
 	};
 
-
 	// Initialize arguments
 	plib_CreateArgAndForAll(pl)
 	  {

@@ -395,22 +395,18 @@ _plib_HelpMenu(struct plib_Argument *ar, plib_PrintFuncType print)
 //	argv[a.vals[0]]
 
 #define plib_ArgRun(a) (a->idx > 0)
-
 #define plib_SArgRun(a) (a.idx > 0)
 
 #define plib_ArgValueCount(a) a->idx
-
 #define plib_SArgValueCount(a) a.idx
 
 #define plib_ArgValue(a, n) \
 	(n < a->idx) ? argv[a->vals[n]] : NULL
-
 #define plib_SArgValue(a, n) \
 	(n < a.idx) ? argv[a.vals[n]] : NULL
 
 #define plib_ArgGetFirstValue(a) \
 	(a->idx > 0) ? argv[a->vals[0]] : NULL
-
 #define plib_SArgGetFirstValue(a) \
 	(a.idx > 0) ? argv[a.vals[0]] : NULL
 
