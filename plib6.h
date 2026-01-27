@@ -1,4 +1,4 @@
-// `plib 6.0.1`
+// `plib 6.1.7`
 #ifndef PLIB_6
 #define PLIB_6
 
